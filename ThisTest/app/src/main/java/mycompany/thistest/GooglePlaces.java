@@ -57,8 +57,9 @@ public class GooglePlaces {
             request.getUrl().put("key", API_KEY);
 
             request.getUrl().put("location", _latitude + "," + _longitude);
-            request.getUrl().put("radius", _radius); // in meters
+            //request.getUrl().put("radius", _radius); // in meters
             request.getUrl().put("sensor", "false");
+            request.getUrl().put("rankby","distance");
 
             if(types != null)
                 request.getUrl().put("types", types);
@@ -66,6 +67,7 @@ public class GooglePlaces {
             PlacesList list = request.execute().parseAs(PlacesList.class);
             // Check log cat for places response status
             Log.d("Places Status", "" + list.status);
+            Log.d("Places Status", "" + list.results.size());
             return list;
 
         } catch (Exception e) {
@@ -87,10 +89,13 @@ public class GooglePlaces {
             HttpRequestFactory httpRequestFactory = createRequestFactory(HTTP_TRANSPORT);
             HttpRequest request = httpRequestFactory
                     .buildGetRequest(new GenericUrl(PLACES_DETAILS_URL));
+            //request.getUrl().put("place_id", reference);
+
             request.getUrl().put("key", API_KEY);
             request.getUrl().put("reference", reference);
             request.getUrl().put("sensor", "false");
             PlaceDetails place = request.execute().parseAs(PlaceDetails.class);
+
 
             return place;
 

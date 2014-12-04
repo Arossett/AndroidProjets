@@ -11,6 +11,8 @@ import com.google.api.client.util.Key;
  * Otherwise you can't pass to another actitivy
  * */
 public class Place implements Serializable {
+    @Key
+    public String place_id;
 
     @Key
     public String id;
