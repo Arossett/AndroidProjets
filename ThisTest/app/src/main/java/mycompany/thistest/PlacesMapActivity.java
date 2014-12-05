@@ -1,6 +1,7 @@
 package mycompany.thistest;
 
 import android.app.Activity;
+import android.app.DialogFragment;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.Color;
@@ -38,9 +39,9 @@ import java.util.HashMap;
 import java.util.List;
 
 
-public class PlacesMapActivity extends Activity  {
+public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDialogListener {
 
-    public static final float ZOOM_MIN = 15;
+    public static final float ZOOM_MIN = 14.5f;
     // Nearest places
     PlacesList nearPlaces;
 
@@ -57,6 +58,7 @@ public class PlacesMapActivity extends Activity  {
     HashMap<Marker, String> markerRef;
     Marker pos;
     boolean isErased;
+    int max_pos;
 
 
     @Override
@@ -69,8 +71,6 @@ public class PlacesMapActivity extends Activity  {
         initParams();
         setCameraListener();
 
-
-        new LoadPlaces().execute();
 
         //to set the button used to show places list
         Button b = (Button) findViewById(R.id.button);
@@ -110,7 +110,6 @@ public class PlacesMapActivity extends Activity  {
             @Override
             public void onInfoWindowClick(Marker marker) {
                 String reference = markerRef.get(marker);
-                // map.stopAnimation();
 
                 // Starting new intent
                 Intent in = new Intent(getApplicationContext(),
@@ -157,17 +156,18 @@ public class PlacesMapActivity extends Activity  {
 
         oldPos = new LatLng(user_lat, user_long);
         currentPos = new LatLng(user_lat, user_long);
-        radius = 500;
+        radius = 400;
+        max_pos = 0;
         // final LatLngBounds.Builder builder = new LatLngBounds.Builder();
 
        CircleOptions circleOptions = new CircleOptions()
                 .center(currentPos)
-                .radius(radius)
+                .radius(max_pos)
                 .fillColor(0x220000FF)
                 .strokeColor(Color.TRANSPARENT);
         circle = map.addCircle(circleOptions);
         isErased = false;
-        types = "restaurant|bar";
+        types = null;
 
     }
 
@@ -193,7 +193,7 @@ public class PlacesMapActivity extends Activity  {
                         if(isErased) {
                             CircleOptions circleOptions = new CircleOptions()
                                     .center(currentPos)
-                                    .radius(radius)
+                                    .radius(max_pos)
                                     .fillColor(0x220000FF)
                                     .strokeColor(Color.TRANSPARENT);
 
@@ -241,6 +241,8 @@ public class PlacesMapActivity extends Activity  {
 
         //noinspection SimplifiableIfStatement
         if (id == R.id.action_settings) {
+            TypesChoice myDiag=new TypesChoice();
+            myDiag.show(getFragmentManager(), "Diag");
             return true;
         }
 
@@ -279,34 +281,35 @@ public class PlacesMapActivity extends Activity  {
         for (Place place : nearPlaces.results) {
             double latitude = place.geometry.location.lat; // latitude
             double longitude = place.geometry.location.lng; // longitude
-            maximum = Math.max(maximum, (int)distFrom(currentPos, new LatLng(latitude, longitude)));
+            int distance = (int)distFrom(currentPos, new LatLng(latitude, longitude));
+            if(distance<=radius) {
+                maximum = Math.max(maximum, distance);
 
-            //used when search other that by radar
-            String mDrawableName = place.types[0];
-            String[] str = parseType(types);
-            for(int i = 0; i < str.length; i++){
-                if(Arrays.asList(place.types).contains(str[i])) {
-                    mDrawableName = str[i];
-                    break;
+                //used when search other that by radar
+                String mDrawableName = place.types[0];
+                String[] str = parseType(types);
+                for (int i = 0; i < str.length; i++) {
+                    if (Arrays.asList(place.types).contains(str[i])) {
+                        mDrawableName = str[i];
+                        break;
+                    }
                 }
-            }
 
-            int resID = getResources().getIdentifier(mDrawableName , "drawable", getPackageName());
-            Marker m;
-            if(resID==0) {
-                m = (map.addMarker(new MarkerOptions()
-                        .position(new LatLng(latitude, longitude))
-                        .title(place.name)));
-            }
-            else {
-                m = (map.addMarker(new MarkerOptions()
-                        .position(new LatLng(latitude, longitude))
-                        .title(place.name)
-                        .icon(BitmapDescriptorFactory.fromResource(resID))));
-            }
+                int resID = getResources().getIdentifier(mDrawableName, "drawable", getPackageName());
+                Marker m;
+                if (resID == 0) {
+                    m = (map.addMarker(new MarkerOptions()
+                            .position(new LatLng(latitude, longitude))
+                            .title(place.name)));
+                } else {
+                    m = (map.addMarker(new MarkerOptions()
+                            .position(new LatLng(latitude, longitude))
+                            .title(place.name)
+                            .icon(BitmapDescriptorFactory.fromResource(resID))));
+                }
 
-            markerRef.put(m,place.reference);
-
+                markerRef.put(m, place.reference);
+            }
 
                /* builder.include(new LatLng(latitude, longitude));
 
@@ -318,9 +321,9 @@ public class PlacesMapActivity extends Activity  {
             num++;
         }
         Log.v("distance","distance max = " + maximum);
-        radius = maximum;
+        max_pos = maximum;
         circle.setCenter(currentPos);
-        circle.setRadius(radius);
+        circle.setRadius(max_pos);
 
         Log.v("nawak", "number of places : "+ num);
     }
@@ -330,6 +333,22 @@ public class PlacesMapActivity extends Activity  {
         String delims = "[|]";
         String[] tokens = types.split(delims);
         return tokens;
+    }
+
+    @Override
+    public void onDialogPositiveClick(TypesChoice dialog) {
+        ArrayList<String> list = dialog.getmSelectedItems();
+        types = "";
+        for(String s : list) {
+            types = types + "|" + s;
+            new LoadPlaces().execute();
+            Log.v("types", s);
+        }
+    }
+
+    @Override
+    public void onDialogNegativeClick(TypesChoice dialog) {
+
     }
 
 
