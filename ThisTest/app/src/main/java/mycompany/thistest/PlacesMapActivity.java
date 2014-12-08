@@ -118,7 +118,7 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
 
                 //search it on the map
                 if(location!=null && !location.equals("")){
-                   new GeocoderTask(PlacesMapActivity.this).execute(location);
+                   new GeocodeTask(PlacesMapActivity.this).execute(location);
 
                 }
             }
