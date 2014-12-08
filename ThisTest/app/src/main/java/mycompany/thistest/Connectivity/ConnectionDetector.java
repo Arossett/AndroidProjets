@@ -1,16 +1,16 @@
-package mycompany.thistest;
+package mycompany.thistest.Connectivity;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.app.Dialog;
 import android.content.Context;
-import android.content.DialogInterface;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.util.Log;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesUtil;
+
+import mycompany.thistest.Dialogs.AlertDialogManager;
 
 public class ConnectionDetector {
 

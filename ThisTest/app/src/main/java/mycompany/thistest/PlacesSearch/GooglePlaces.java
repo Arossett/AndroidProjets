@@ -1,10 +1,9 @@
-package mycompany.thistest;
+package mycompany.thistest.PlacesSearch;
 
 import android.util.Log;
 
 import com.google.api.client.googleapis.GoogleHeaders;
 import com.google.api.client.http.GenericUrl;
-import com.google.api.client.http.HttpMethod;
 import com.google.api.client.http.HttpRequest;
 import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpRequestInitializer;

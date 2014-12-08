@@ -1,4 +1,4 @@
-package mycompany.thistest;
+package mycompany.thistest.Dialogs;
 import android.app.AlertDialog;
 import android.content.Context;
 import android.content.DialogInterface;

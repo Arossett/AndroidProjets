@@ -1,16 +1,12 @@
 package mycompany.thistest;
 
 import android.app.Activity;
-import android.app.DialogFragment;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.Color;
-import android.location.Address;
-import android.location.Geocoder;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.text.Html;
-import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -18,7 +14,6 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
-import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -28,16 +23,20 @@ import com.google.android.gms.maps.model.CameraPosition;
 import com.google.android.gms.maps.model.Circle;
 import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
-import com.google.android.gms.maps.model.LatLngBounds;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
-import java.util.List;
+
+import mycompany.thistest.Connectivity.ConnectionDetector;
+import mycompany.thistest.Connectivity.GPSTracker;
+import mycompany.thistest.Dialogs.TypesChoice;
+import mycompany.thistest.PlacesSearch.GooglePlaces;
+import mycompany.thistest.PlacesSearch.Place;
+import mycompany.thistest.PlacesSearch.PlacesList;
 
 
 public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDialogListener {
@@ -51,8 +50,7 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
 
     double radius;
     LatLng oldPos;
-    LatLng currentPos;
-    GPSTracker gps;
+    private LatLng currentPos;
     boolean isRunning;
     Circle circle;
     String types;
@@ -61,12 +59,13 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
     boolean isErased;
     int max_pos;
     ConnectionDetector cd;
+    Utils utils;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_places_map);
-
+        utils = new Utils();
         cd = new ConnectionDetector(getApplicationContext());
 
         // Check if Internet present
@@ -119,11 +118,13 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
 
                 //search it on the map
                 if(location!=null && !location.equals("")){
-                    new GeocoderTask().execute(location);
+                   new GeocoderTask(PlacesMapActivity.this).execute(location);
+
                 }
             }
         };
         btn_find.setOnClickListener(findClickListener);
+
         map.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
             @Override
             public void onInfoWindowClick(Marker marker) {
@@ -165,9 +166,9 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
         pos = null;
         markerRef = new HashMap<Marker, String>();
         map = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
-        gps = new GPSTracker(this);
+        GPSTracker gps = new GPSTracker(this);
         map.setMyLocationEnabled(true);
-        map.setPadding(0, dpToPx(50), 0, 0);
+        map.setPadding(0, utils.dpToPx(50, getBaseContext()), 0, 0);
 
         double user_lat = gps.getLatitude();
         double user_long = gps.getLongitude();
@@ -200,7 +201,7 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
                 currentPos = cameraPosition.target;
                 Log.v("nawak", "camera zoom" + cameraPosition.zoom);
                 if(cameraPosition.zoom>=ZOOM_MIN ){
-                    if((distFrom(oldPos, currentPos) > radius/2||markerRef.isEmpty()) && isRunning){
+                    if((utils.distFrom(oldPos, currentPos) > radius/2||markerRef.isEmpty()) && isRunning){
 
                         oldPos = cameraPosition.target;
                         new LoadPlaces().execute();
@@ -234,12 +235,7 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
 
     }
 
-    //transform displaymetrics units into pixels units
-    public int dpToPx(int dp) {
-        DisplayMetrics displayMetrics = getBaseContext().getResources().getDisplayMetrics();
-        int px = Math.round(dp * (displayMetrics.xdpi / DisplayMetrics.DENSITY_DEFAULT));
-        return px;
-    }
+
 
 
     @Override
@@ -267,48 +263,29 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
         return super.onOptionsItemSelected(item);
     }
 
-    //to calculate distance between 2 locations (in meters)
-    public static float distFrom(LatLng pos1, LatLng pos2) {
-        double lat1 = pos1.latitude;
-        double lng1 = pos1.longitude;
-        double lat2 = pos2.latitude;
-        double lng2 = pos2.longitude;
-        double earthRadius = 6371; //kilometers
-        double dLat = Math.toRadians(lat2-lat1);
-        double dLng = Math.toRadians(lng2-lng1);
-        double a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(Math.toRadians(lat1)) * Math.cos(Math.toRadians(lat2)) *
-                        Math.sin(dLng/2) * Math.sin(dLng/2);
-        double c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-        float dist = (float) (earthRadius * c);
-        return dist*1000; //to have it in meters
-
-    }
 
     //to add markers on map following places found
     private void setMarkers(){
-        int maximum = 0;
+        max_pos = 0;
         for(Marker m : markerRef.keySet())
             m.remove();
+
         markerRef.clear();
 
-        int num = 0;
-
-        Log.v("results", "size : "+ nearPlaces.results.size());
         if(nearPlaces.results!= null)
             for (Iterator<Place> iterator = nearPlaces.results.iterator(); iterator.hasNext(); ) {
                 Place place = iterator.next();
-        //for (Place place : nearPlaces.results) {
+
             double latitude = place.geometry.location.lat; // latitude
             double longitude = place.geometry.location.lng; // longitude
-            int distance = (int)distFrom(currentPos, new LatLng(latitude, longitude));
+            int distance = (int)utils.distFrom(currentPos, new LatLng(latitude, longitude));
 
             if(distance<=radius) {
-                maximum = Math.max(maximum, distance);
+                max_pos = Math.max(max_pos, distance);
 
                 //used when search other that by radar
                 String mDrawableName = place.types[0];
-                String[] str = parseType(types);
+                String[] str = utils.parseType(types);
                 for (int i = 0; i < str.length; i++) {
                     if (Arrays.asList(place.types).contains(str[i])) {
                         mDrawableName = str[i];
@@ -334,30 +311,11 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
             else{
                iterator.remove();
             }
-
-               /* builder.include(new LatLng(latitude, longitude));
-
-                // calculating map boundary area
-                minLat  = (int) Math.min( user_lat, minLat );
-                minLong = (int) Math.min( user_long, minLong);
-                maxLat  = (int) Math.max( user_lat, maxLat );
-                maxLong = (int) Math.max( user_long, maxLong );*/
-            num++;
         }
 
-        Log.v("distance","distance max = " + maximum);
-        max_pos = maximum;
+        Log.v("distance","distance max = " + max_pos);
         circle.setCenter(currentPos);
         circle.setRadius(max_pos);
-
-        Log.v("nawak", "number of places : "+ num);
-    }
-
-    //to have types of place in a tab
-    private String[] parseType(String types){
-        String delims = "[|]";
-        String[] tokens = types.split(delims);
-        return tokens;
     }
 
     @Override
@@ -384,61 +342,13 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
         return false;
     }
 
-
-    // An AsyncTask class for accessing the GeoCoding Web Service
-    //used for search bar
-    private class GeocoderTask extends AsyncTask<String, Void, List<Address>> {
-
-        @Override
-        protected List<Address> doInBackground(String... locationName) {
-            // Creating an instance of Geocoder class
-
-            Geocoder geocoder = new Geocoder(getBaseContext());
-
-            List<Address> addresses = null;
-
-            try {
-                // Getting a maximum of 3 Address that matches the input text
-                addresses = geocoder.getFromLocationName(locationName[0], 3);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-            return addresses;
-        }
-
-        @Override
-        protected void onPostExecute(List<Address> addresses) {
-
-            if(addresses==null || addresses.size()==0){
-                Toast.makeText(getBaseContext(), "No Location found", Toast.LENGTH_SHORT).show();
-                return;
-            }
-
-            // Adding Markers on Google Map for each matching address
-            for(int i=0;i<addresses.size();i++){
-
-                Address address = (Address) addresses.get(i);
-
-                // Creating an instance of GeoPoint, to display in Google Map
-                currentPos = new LatLng(address.getLatitude(), address.getLongitude());
-
-                // Locate the first location
-                if(i==0)
-                    map.animateCamera(CameraUpdateFactory.newLatLng(currentPos));
-            }
-        }
-    }
-
-
     /**
      * Background Async Task to Load Google places
      * */
     class LoadPlaces extends AsyncTask<String, String, String> {
         ProgressDialog pDialog;
 
-        /**
-         * Before starting background thread Show Progress Dialog
-         * */
+
         @Override
         protected void onPreExecute() {
             pDialog = new ProgressDialog(PlacesMapActivity.this);
@@ -450,9 +360,7 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
 
         }
 
-        /**
-         * getting Places JSON
-         * */
+
         protected String doInBackground(String... args) {
 
             // creating Places class object
@@ -470,12 +378,7 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
             return null;
         }
 
-        /**
-         * After completing background task Dismiss the progress dialog
-         * and show the data in UI
-         * Always use runOnUiThread(new Runnable()) to update UI from background
-         * thread, otherwise you will get error
-         * **/
+
         protected void onPostExecute(String file_url) {
             runOnUiThread(new Runnable() {
                 public void run() {
@@ -487,6 +390,10 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
             pDialog.dismiss();
 
         }
+    }
+
+    public void setCurrentPos(LatLng pos){
+        currentPos = pos;
     }
 
 

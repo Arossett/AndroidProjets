@@ -1,4 +1,4 @@
-package mycompany.thistest;
+package mycompany.thistest.Connectivity;
 
 
 import android.app.AlertDialog;
@@ -10,7 +10,6 @@ import android.location.Location;
 import android.location.LocationListener;
 import android.location.LocationManager;
 import android.os.Bundle;
-import android.os.Handler;
 import android.os.IBinder;
 import android.provider.Settings;
 import android.util.Log;
@@ -45,7 +44,6 @@ public class GPSTracker extends Service implements LocationListener, Serializabl
 
     public GPSTracker(Context context) {
         this.mContext = context;
-        listener = null;
         getLocation();
 
     }
@@ -187,11 +185,7 @@ public class GPSTracker extends Service implements LocationListener, Serializabl
         // Showing Alert Message
         alertDialog.show();
     }
-    LocListener listener;
 
-    public void addListener(LocListener ll){
-        listener = ll;
-    }
 
     @Override
     public void onProviderDisabled(String provider) {
@@ -204,8 +198,6 @@ public class GPSTracker extends Service implements LocationListener, Serializabl
     @Override
     public void onLocationChanged(Location loc) {
        location = loc;
-        if(listener!=null)
-            listener.locationHasChanged(loc);
     }
 
     @Override

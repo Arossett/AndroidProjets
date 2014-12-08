@@ -1,4 +1,4 @@
-package mycompany.thistest;
+package mycompany.thistest.PlacesSearch;
 
 
 import java.io.Serializable;

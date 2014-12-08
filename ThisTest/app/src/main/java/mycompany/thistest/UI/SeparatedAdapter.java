@@ -1,4 +1,4 @@
-package mycompany.thistest;
+package mycompany.thistest.UI;
 
 import android.content.Context;
 import android.view.View;
@@ -10,6 +10,8 @@ import android.widget.BaseAdapter;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+
+import mycompany.thistest.R;
 
 public class SeparatedAdapter extends BaseAdapter {
 

@@ -2,20 +2,21 @@ package mycompany.thistest;
 
 import android.app.Activity;
 import android.os.Bundle;
-import android.view.Menu;
-import android.view.MenuItem;
 
 
-import android.app.Activity;
 import android.app.ProgressDialog;
 import android.content.Intent;
 import android.os.AsyncTask;
-import android.os.Bundle;
 import android.text.Html;
 import android.util.Log;
 import android.view.View;
 import android.widget.RatingBar;
 import android.widget.TextView;
+
+import mycompany.thistest.Connectivity.ConnectionDetector;
+import mycompany.thistest.Dialogs.AlertDialogManager;
+import mycompany.thistest.PlacesSearch.GooglePlaces;
+import mycompany.thistest.PlacesSearch.PlaceDetails;
 
 public class SinglePlaceActivity extends Activity {
     // flag for Internet connection status

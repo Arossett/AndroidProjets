@@ -1,9 +1,11 @@
-package mycompany.thistest;
+package mycompany.thistest.PlacesSearch;
 
 import java.io.Serializable;
 import java.util.List;
 
 import com.google.api.client.util.Key;
+
+import mycompany.thistest.PlacesSearch.Place;
 
 /** Implement this class from "Serializable"
  * So that you can pass this class Object to another using Intents
