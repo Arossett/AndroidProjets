@@ -36,6 +36,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 
 
@@ -59,12 +60,29 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
     Marker pos;
     boolean isErased;
     int max_pos;
-
+    ConnectionDetector cd;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_places_map);
+
+        cd = new ConnectionDetector(getApplicationContext());
+
+        // Check if Internet present
+        boolean isInternetPresent = cd.isConnectingToInternet();
+
+        if(cd.servicesConnected()){
+            Log.v("googleservices", "connected");
+        }else
+            Log.v("googleservices", "not connected");
+
+        if(isInternetPresent)
+            Log.v("internetservices", "connected");
+        else
+            Log.v("internetservices", "not connected");
+
+
         TypesChoice myDiag=new TypesChoice();
         myDiag.show(getFragmentManager(), "Diag");
 
@@ -278,10 +296,13 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
 
         Log.v("results", "size : "+ nearPlaces.results.size());
         if(nearPlaces.results!= null)
-        for (Place place : nearPlaces.results) {
+            for (Iterator<Place> iterator = nearPlaces.results.iterator(); iterator.hasNext(); ) {
+                Place place = iterator.next();
+        //for (Place place : nearPlaces.results) {
             double latitude = place.geometry.location.lat; // latitude
             double longitude = place.geometry.location.lng; // longitude
             int distance = (int)distFrom(currentPos, new LatLng(latitude, longitude));
+
             if(distance<=radius) {
                 maximum = Math.max(maximum, distance);
 
@@ -310,6 +331,9 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
 
                 markerRef.put(m, place.reference);
             }
+            else{
+               iterator.remove();
+            }
 
                /* builder.include(new LatLng(latitude, longitude));
 
@@ -320,6 +344,7 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
                 maxLong = (int) Math.max( user_long, maxLong );*/
             num++;
         }
+
         Log.v("distance","distance max = " + maximum);
         max_pos = maximum;
         circle.setCenter(currentPos);
@@ -336,19 +361,27 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
     }
 
     @Override
-    public void onDialogPositiveClick(TypesChoice dialog) {
-        ArrayList<String> list = dialog.getmSelectedItems();
-        types = "";
-        for(String s : list) {
-            types = types + "|" + s;
-            new LoadPlaces().execute();
-            Log.v("types", s);
+    public boolean onDialogPositiveClick(TypesChoice dialog) {
+        if(!cd.servicesConnected()||!cd.isConnectingToInternet()) {
+            Log.v("dialog", "should stay? ");
+            dialog.show(getFragmentManager(), "Diag");
+            return false;
+
+        }else{
+            ArrayList<String> list = dialog.getmSelectedItems();
+            types = "";
+            for(String s : list) {
+                types = types + "|" + s;
+                new LoadPlaces().execute();
+                Log.v("types", s);
+            }
+            return true;
         }
     }
 
     @Override
-    public void onDialogNegativeClick(TypesChoice dialog) {
-
+    public boolean onDialogNegativeClick(TypesChoice dialog) {
+        return false;
     }
 
 
