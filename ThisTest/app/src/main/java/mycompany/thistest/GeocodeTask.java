@@ -69,7 +69,4 @@ public class GeocodeTask extends AsyncTask<String, Void, List<Address>> {
        }
    }
 
-   public LatLng getPosFound(){
-       return posFound;
-   }
 }

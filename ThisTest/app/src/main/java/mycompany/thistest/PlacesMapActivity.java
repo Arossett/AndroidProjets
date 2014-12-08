@@ -1,12 +1,9 @@
 package mycompany.thistest;
 
 import android.app.Activity;
-import android.app.ProgressDialog;
 import android.content.Intent;
 import android.graphics.Color;
-import android.os.AsyncTask;
 import android.os.Bundle;
-import android.text.Html;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -31,10 +28,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 
-import mycompany.thistest.Connectivity.ConnectionDetector;
 import mycompany.thistest.Connectivity.GPSTracker;
 import mycompany.thistest.Dialogs.TypesChoice;
-import mycompany.thistest.PlacesSearch.GooglePlaces;
 import mycompany.thistest.PlacesSearch.Place;
 import mycompany.thistest.PlacesSearch.PlacesList;
 
@@ -43,22 +38,39 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
 
     public static final float ZOOM_MIN = 14.5f;
     // Nearest places
-    PlacesList nearPlaces;
+    private PlacesList nearPlaces;
 
     // Map view
     GoogleMap map;
 
+    //radius of the perimeter where we look for places
     double radius;
+
+    //last position where places were displayed
     LatLng oldPos;
+
+    //current position of the camera
     private LatLng currentPos;
-    boolean isRunning;
+
+    //right if the camera is still moving
+    boolean isMoving;
+
+    //circle used to show perimeter where places were looked
     Circle circle;
+
+    //types of places to find
     String types;
+
+    //to get the reference of a particular marker (used to display details about a place from map)
     HashMap<Marker, String> markerRef;
+
+    //marker of the camera, needed to remove marker from previous location
     Marker pos;
-    boolean isErased;
+
+    //the farest location of marker
     int max_pos;
-    ConnectionDetector cd;
+
+    //to use methods from Utils class
     Utils utils;
 
     @Override
@@ -66,28 +78,43 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_places_map);
         utils = new Utils();
-        cd = new ConnectionDetector(getApplicationContext());
-
-        // Check if Internet present
-        boolean isInternetPresent = cd.isConnectingToInternet();
-
-        if(cd.servicesConnected()){
-            Log.v("googleservices", "connected");
-        }else
-            Log.v("googleservices", "not connected");
-
-        if(isInternetPresent)
-            Log.v("internetservices", "connected");
-        else
-            Log.v("internetservices", "not connected");
-
 
         TypesChoice myDiag=new TypesChoice();
         myDiag.show(getFragmentManager(), "Diag");
 
         initParams();
         setCameraListener();
+        addButtonsListener();
+        map.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
+            @Override
+            public void onInfoWindowClick(Marker marker) {
+                String reference = markerRef.get(marker);
 
+                // Starting new intent
+                Intent in = new Intent(getApplicationContext(),
+                        SinglePlaceActivity.class);
+
+                // Sending place refrence id to single place activity
+                // place refrence id used to get "Place full details"
+                in.putExtra("reference", reference);
+                startActivity(in);
+            }
+        });
+
+        map.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
+            @Override
+            public boolean onMarkerClick(Marker marker) {
+                marker.showInfoWindow();
+               map.stopAnimation();
+
+                return true;
+            }
+        });
+
+    }
+
+    //to add buttons' listener
+    private void addButtonsListener(){
 
         //to set the button used to show places list
         Button b = (Button) findViewById(R.id.button);
@@ -118,45 +145,18 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
 
                 //search it on the map
                 if(location!=null && !location.equals("")){
-                   new GeocodeTask(PlacesMapActivity.this).execute(location);
+                    new GeocodeTask(PlacesMapActivity.this).execute(location);
 
                 }
             }
         };
         btn_find.setOnClickListener(findClickListener);
-
-        map.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
-            @Override
-            public void onInfoWindowClick(Marker marker) {
-                String reference = markerRef.get(marker);
-
-                // Starting new intent
-                Intent in = new Intent(getApplicationContext(),
-                        SinglePlaceActivity.class);
-
-                // Sending place refrence id to single place activity
-                // place refrence id used to get "Place full details"
-                in.putExtra("reference", reference);
-                startActivity(in);
-            }
-        });
-
-        map.setOnMarkerClickListener(new GoogleMap.OnMarkerClickListener() {
-            @Override
-            public boolean onMarkerClick(Marker marker) {
-                marker.showInfoWindow();
-               map.stopAnimation();
-
-                return true;
-            }
-        });
-
     }
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
         if(ev.getAction()==MotionEvent.ACTION_UP) {
-            isRunning = true;
+            isMoving = true;
         }
         return super.dispatchTouchEvent(ev);
     }
@@ -185,7 +185,6 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
                 .fillColor(0x220000FF)
                 .strokeColor(Color.TRANSPARENT);
         circle = map.addCircle(circleOptions);
-        isErased = false;
         types = null;
 
     }
@@ -201,15 +200,15 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
                 currentPos = cameraPosition.target;
                 Log.v("nawak", "camera zoom" + cameraPosition.zoom);
                 if(cameraPosition.zoom>=ZOOM_MIN ){
-                    if((utils.distFrom(oldPos, currentPos) > radius/2||markerRef.isEmpty()) && isRunning){
+                    if((utils.distFrom(oldPos, currentPos) > radius/2||markerRef.isEmpty()) && isMoving){
 
                         oldPos = cameraPosition.target;
-                        new LoadPlaces().execute();
+                        new LoadPlaces(PlacesMapActivity.this, radius, types, currentPos).execute();
                         if(pos != null)
                             pos.remove();
                         pos = map.addMarker(new MarkerOptions().position(currentPos));
-                        isRunning = false;
-                        if(isErased) {
+                        isMoving = false;
+                        if(circle == null) {
                             CircleOptions circleOptions = new CircleOptions()
                                     .center(currentPos)
                                     .radius(max_pos)
@@ -218,25 +217,19 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
 
                             circle = map.addCircle(circleOptions);
                             findViewById(R.id.button).setVisibility(View.VISIBLE);
-                            isErased = false;
                         }
                     }
                 }else {
                     map.clear();
+                    circle = null;
                     markerRef.clear();
-                    isErased = true;
                     findViewById(R.id.button).setVisibility(View.INVISIBLE);
 
                 }
             }
         };
-
         map.setOnCameraChangeListener(listener);
-
     }
-
-
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -244,7 +237,6 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
         getMenuInflater().inflate(R.menu.menu_places_map, menu);
         return true;
     }
-
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
@@ -265,7 +257,7 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
 
 
     //to add markers on map following places found
-    private void setMarkers(){
+    public void setMarkers(){
         max_pos = 0;
         for(Marker m : markerRef.keySet())
             m.remove();
@@ -320,21 +312,18 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
 
     @Override
     public boolean onDialogPositiveClick(TypesChoice dialog) {
-        if(!cd.servicesConnected()||!cd.isConnectingToInternet()) {
-            Log.v("dialog", "should stay? ");
-            dialog.show(getFragmentManager(), "Diag");
-            return false;
-
-        }else{
-            ArrayList<String> list = dialog.getmSelectedItems();
-            types = "";
-            for(String s : list) {
-                types = types + "|" + s;
-                new LoadPlaces().execute();
-                Log.v("types", s);
-            }
-            return true;
+        ArrayList<String> list = dialog.getmSelectedItems();
+        types = "";
+        for(String s : list) {
+            types = types + "|" + s;
+            new LoadPlaces(PlacesMapActivity.this, radius, types, currentPos).execute();
+            Log.v("types", s);
         }
+        return true;
+    }
+
+    public void setCurrentPos(LatLng pos){
+        currentPos = pos;
     }
 
     @Override
@@ -342,10 +331,14 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
         return false;
     }
 
+    public void setNearPlaces(PlacesList np){
+        nearPlaces = np;
+    }
+
     /**
      * Background Async Task to Load Google places
      * */
-    class LoadPlaces extends AsyncTask<String, String, String> {
+    /*class LoadPlaces extends AsyncTask<String, String, String> {
         ProgressDialog pDialog;
 
 
@@ -390,12 +383,5 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
             pDialog.dismiss();
 
         }
-    }
-
-    public void setCurrentPos(LatLng pos){
-        currentPos = pos;
-    }
-
-
-
+    }*/
 }
