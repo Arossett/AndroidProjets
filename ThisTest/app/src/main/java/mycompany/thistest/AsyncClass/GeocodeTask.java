@@ -1,4 +1,4 @@
-package mycompany.thistest;
+package mycompany.thistest.AsyncClass;
 
 import android.app.Activity;
 import android.content.Context;
@@ -12,6 +12,8 @@ import com.google.android.gms.maps.model.LatLng;
 
 import java.io.IOException;
 import java.util.List;
+
+import mycompany.thistest.PlacesMapActivity;
 
 
 public class GeocodeTask extends AsyncTask<String, Void, List<Address>> {
@@ -63,7 +65,7 @@ public class GeocodeTask extends AsyncTask<String, Void, List<Address>> {
            if(activity instanceof PlacesMapActivity) {
                PlacesMapActivity pl = (PlacesMapActivity) activity;
                pl.setCurrentPos(posFound);
-               pl.map.animateCamera(CameraUpdateFactory.newLatLng(posFound));
+               pl.getMap().animateCamera(CameraUpdateFactory.newLatLng(posFound));
            }
 
        }

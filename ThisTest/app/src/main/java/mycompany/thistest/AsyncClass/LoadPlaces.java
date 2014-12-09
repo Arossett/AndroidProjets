@@ -1,4 +1,4 @@
-package mycompany.thistest;
+package mycompany.thistest.AsyncClass;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
@@ -7,6 +7,7 @@ import android.text.Html;
 
 import com.google.android.gms.maps.model.LatLng;
 
+import mycompany.thistest.PlacesMapActivity;
 import mycompany.thistest.PlacesSearch.GooglePlaces;
 import mycompany.thistest.PlacesSearch.PlacesList;
 

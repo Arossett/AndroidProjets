@@ -28,6 +28,8 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 
+import mycompany.thistest.AsyncClass.GeocodeTask;
+import mycompany.thistest.AsyncClass.LoadPlaces;
 import mycompany.thistest.Connectivity.GPSTracker;
 import mycompany.thistest.Dialogs.TypesChoice;
 import mycompany.thistest.PlacesSearch.Place;
@@ -41,7 +43,7 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
     private PlacesList nearPlaces;
 
     // Map view
-    GoogleMap map;
+    private GoogleMap map;
 
     //radius of the perimeter where we look for places
     double radius;
@@ -335,6 +337,9 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
         nearPlaces = np;
     }
 
+    public GoogleMap getMap(){
+        return map;
+    }
     /**
      * Background Async Task to Load Google places
      * */
