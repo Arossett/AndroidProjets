@@ -5,6 +5,7 @@ import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.AsyncTask;
+import android.util.Log;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
@@ -22,27 +23,28 @@ public class GeocodeTask extends AsyncTask<String, Void, List<Address>> {
    LatLng posFound;
    Activity activity;
 
-   public GeocodeTask(Activity a){
-       context = a.getBaseContext();
+    public GeocodeTask(Activity a){
        activity = a;
        posFound = new LatLng(0,0);
+
 
    }
 
    @Override
    protected List<Address> doInBackground(String... locationName) {
        // Creating an instance of Geocoder class
-
-
-       Geocoder geocoder = new Geocoder(context);
+        Geocoder geocoder = new Geocoder(activity.getBaseContext());
 
        List<Address> addresses = null;
+
+       Log.v("SearchBar", "location to found " + locationName[0]);
 
        try {
            // Getting a maximum of 3 Address that matches the input text
            addresses = geocoder.getFromLocationName(locationName[0], 3);
        } catch (IOException e) {
            e.printStackTrace();
+           Log.e("searchtask", e.toString());
        }
        return addresses;
    }
@@ -64,7 +66,7 @@ public class GeocodeTask extends AsyncTask<String, Void, List<Address>> {
            posFound = new LatLng(address.getLatitude(), address.getLongitude());
            if(activity instanceof PlacesMapActivity) {
                PlacesMapActivity pl = (PlacesMapActivity) activity;
-               pl.setCurrentPos(posFound);
+               //pl.setCurrentPos(posFound);
                pl.getMap().animateCamera(CameraUpdateFactory.newLatLng(posFound));
            }
 

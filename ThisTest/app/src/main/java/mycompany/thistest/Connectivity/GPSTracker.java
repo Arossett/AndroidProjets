@@ -44,6 +44,8 @@ public class GPSTracker extends Service implements LocationListener, Serializabl
 
     public GPSTracker(Context context) {
         this.mContext = context;
+        latitude = 0;
+        longitude = 0;
         getLocation();
 
     }
@@ -62,7 +64,7 @@ public class GPSTracker extends Service implements LocationListener, Serializabl
                     .isProviderEnabled(LocationManager.NETWORK_PROVIDER);
 
             if (!isGPSEnabled && !isNetworkEnabled) {
-                // no network provider is enabled
+
             } else {
                 this.canGetLocation = true;
                 if (isNetworkEnabled) {

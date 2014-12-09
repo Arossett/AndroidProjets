@@ -51,8 +51,6 @@ public class LoadPlaceDetails extends AsyncTask<String, String, String> {
             {
                 ((SinglePlaceActivity)activity).setPlaceDetails(placeDetails);
             }
-
-
         } catch (Exception e) {
             e.printStackTrace();
         }

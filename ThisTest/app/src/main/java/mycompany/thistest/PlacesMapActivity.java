@@ -2,7 +2,10 @@ package mycompany.thistest;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.graphics.Color;
+import android.location.Geocoder;
+import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
@@ -11,6 +14,7 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
@@ -30,6 +34,7 @@ import java.util.Iterator;
 
 import mycompany.thistest.AsyncClass.GeocodeTask;
 import mycompany.thistest.AsyncClass.LoadPlaces;
+import mycompany.thistest.Connectivity.ConnectivityChangeReceiver;
 import mycompany.thistest.Connectivity.GPSTracker;
 import mycompany.thistest.Dialogs.TypesChoice;
 import mycompany.thistest.PlacesSearch.Place;
@@ -40,10 +45,10 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
 
     public static final float ZOOM_MIN = 14.5f;
     // Nearest places
-    private PlacesList nearPlaces;
+    PlacesList nearPlaces;
 
     // Map view
-    private GoogleMap map;
+    GoogleMap map;
 
     //radius of the perimeter where we look for places
     double radius;
@@ -52,7 +57,7 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
     LatLng oldPos;
 
     //current position of the camera
-    private LatLng currentPos;
+    //LatLng currentPos;
 
     //right if the camera is still moving
     boolean isMoving;
@@ -75,18 +80,30 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
     //to use methods from Utils class
     Utils utils;
 
+    ConnectivityChangeReceiver connectivityChangeReceiver;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_places_map);
         utils = new Utils();
-
-        TypesChoice myDiag=new TypesChoice();
-        myDiag.show(getFragmentManager(), "Diag");
+        connectivityChangeReceiver =  new ConnectivityChangeReceiver(this);
 
         initParams();
         setCameraListener();
         addButtonsListener();
+
+        //to display choices window
+        if(types ==null) {
+            TypesChoice myDiag = new TypesChoice();
+            myDiag.show(getFragmentManager(), "Diag");
+        }
+
+        registerReceiver(
+                connectivityChangeReceiver,
+                new IntentFilter(
+                        ConnectivityManager.CONNECTIVITY_ACTION));
+
         map.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
             @Override
             public void onInfoWindowClick(Marker marker) {
@@ -142,13 +159,20 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
             @Override
             public void onClick(View v) {
                 //get location edited by user
-                EditText etLocation = (EditText) findViewById(R.id.et_location);
-                String location = etLocation.getText().toString();
+                if(connectivityChangeReceiver.getConnectivity())
+                {
+                    EditText etLocation = (EditText) findViewById(R.id.et_location);
+                    String location = etLocation.getText().toString();
 
-                //search it on the map
-                if(location!=null && !location.equals("")){
-                    new GeocodeTask(PlacesMapActivity.this).execute(location);
+                    //search it on the map
+                    if (location != null && !location.equals("")) {
+                        new GeocodeTask(PlacesMapActivity.this).execute(location);
 
+                    }
+                }
+                else
+                {
+                    Toast.makeText(getBaseContext(), "Please turn on your connection",Toast.LENGTH_SHORT ).show();
                 }
             }
         };
@@ -174,63 +198,67 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
 
         double user_lat = gps.getLatitude();
         double user_long = gps.getLongitude();
-
         oldPos = new LatLng(user_lat, user_long);
-        currentPos = new LatLng(user_lat, user_long);
+
+        //currentPos = new LatLng(user_lat, user_long);
         radius = 400;
         max_pos = 0;
-        // final LatLngBounds.Builder builder = new LatLngBounds.Builder();
 
        CircleOptions circleOptions = new CircleOptions()
-                .center(currentPos)
+                .center(oldPos)
                 .radius(max_pos)
                 .fillColor(0x220000FF)
                 .strokeColor(Color.TRANSPARENT);
         circle = map.addCircle(circleOptions);
         types = null;
-
     }
-
 
     //to initialize and set camera listener (to do in OnCreate)
     private void setCameraListener(){
-        map.moveCamera(CameraUpdateFactory.newLatLngZoom(currentPos,(float)(ZOOM_MIN+0.5)));
+        map.moveCamera(CameraUpdateFactory.newLatLngZoom(oldPos,(float)(ZOOM_MIN+0.5)));
 
         final GoogleMap.OnCameraChangeListener listener = new GoogleMap.OnCameraChangeListener() {
             @Override
             public void onCameraChange(CameraPosition cameraPosition) {
-                currentPos = cameraPosition.target;
-                Log.v("nawak", "camera zoom" + cameraPosition.zoom);
-                if(cameraPosition.zoom>=ZOOM_MIN ){
-                    if((utils.distFrom(oldPos, currentPos) > radius/2||markerRef.isEmpty()) && isMoving){
-
-                        oldPos = cameraPosition.target;
-                        new LoadPlaces(PlacesMapActivity.this, radius, types, currentPos).execute();
-                        if(pos != null)
-                            pos.remove();
-                        pos = map.addMarker(new MarkerOptions().position(currentPos));
-                        isMoving = false;
-                        if(circle == null) {
-                            CircleOptions circleOptions = new CircleOptions()
-                                    .center(currentPos)
-                                    .radius(max_pos)
-                                    .fillColor(0x220000FF)
-                                    .strokeColor(Color.TRANSPARENT);
-
-                            circle = map.addCircle(circleOptions);
-                            findViewById(R.id.button).setVisibility(View.VISIBLE);
-                        }
-                    }
-                }else {
-                    map.clear();
-                    circle = null;
-                    markerRef.clear();
-                    findViewById(R.id.button).setVisibility(View.INVISIBLE);
-
-                }
+                updateMap();
             }
         };
         map.setOnCameraChangeListener(listener);
+    }
+
+    public void updateMap(){
+        CameraPosition cameraPosition = map.getCameraPosition();
+        Log.v("nawak", "camera zoom" + cameraPosition.zoom);
+        if(cameraPosition.zoom>=ZOOM_MIN ){
+            if((utils.distFrom(oldPos, cameraPosition.target) > radius/2||markerRef.isEmpty()) && isMoving){
+                if(connectivityChangeReceiver.getConnectivity()) {
+                    oldPos = cameraPosition.target;
+                    new LoadPlaces(PlacesMapActivity.this, radius, types, cameraPosition.target).execute();
+                    if (pos != null)
+                        pos.remove();
+                    pos = map.addMarker(new MarkerOptions().position(cameraPosition.target));
+                    isMoving = false;
+                    if (circle == null) {
+                        CircleOptions circleOptions = new CircleOptions()
+                                .center(cameraPosition.target)
+                                .radius(max_pos)
+                                .fillColor(0x220000FF)
+                                .strokeColor(Color.TRANSPARENT);
+
+                        circle = map.addCircle(circleOptions);
+                        findViewById(R.id.button).setVisibility(View.VISIBLE);
+                    }
+                }else{
+                    Toast.makeText(getBaseContext(), "Please turn on your connection", Toast.LENGTH_SHORT).show();
+                }
+
+            }
+        }else {
+            map.clear();
+            circle = null;
+            markerRef.clear();
+            findViewById(R.id.button).setVisibility(View.INVISIBLE);
+        }
     }
 
     @Override
@@ -272,7 +300,7 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
 
             double latitude = place.geometry.location.lat; // latitude
             double longitude = place.geometry.location.lng; // longitude
-            int distance = (int)utils.distFrom(currentPos, new LatLng(latitude, longitude));
+            int distance = (int)utils.distFrom(map.getCameraPosition().target, new LatLng(latitude, longitude));
 
             if(distance<=radius) {
                 max_pos = Math.max(max_pos, distance);
@@ -306,9 +334,8 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
                iterator.remove();
             }
         }
-
         Log.v("distance","distance max = " + max_pos);
-        circle.setCenter(currentPos);
+        circle.setCenter(map.getCameraPosition().target);
         circle.setRadius(max_pos);
     }
 
@@ -318,14 +345,10 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
         types = "";
         for(String s : list) {
             types = types + "|" + s;
-            new LoadPlaces(PlacesMapActivity.this, radius, types, currentPos).execute();
+            new LoadPlaces(PlacesMapActivity.this, radius, types, map.getCameraPosition().target).execute();
             Log.v("types", s);
         }
         return true;
-    }
-
-    public void setCurrentPos(LatLng pos){
-        currentPos = pos;
     }
 
     @Override
@@ -340,53 +363,10 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
     public GoogleMap getMap(){
         return map;
     }
-    /**
-     * Background Async Task to Load Google places
-     * */
-    /*class LoadPlaces extends AsyncTask<String, String, String> {
-        ProgressDialog pDialog;
 
-
-        @Override
-        protected void onPreExecute() {
-            pDialog = new ProgressDialog(PlacesMapActivity.this);
-            pDialog.setMessage(Html.fromHtml("<b>Search</b><br/>Loading Places..."));
-            pDialog.setIndeterminate(false);
-            pDialog.setCancelable(false);
-            pDialog.show();
-            super.onPreExecute();
-
-        }
-
-
-        protected String doInBackground(String... args) {
-
-            // creating Places class object
-            GooglePlaces googlePlaces = new GooglePlaces();
-            try {
-
-                // get nearest places
-                nearPlaces = googlePlaces.search(currentPos.latitude,
-                        currentPos.longitude,
-                        radius, types);
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
-
-
-        protected void onPostExecute(String file_url) {
-            runOnUiThread(new Runnable() {
-                public void run() {
-                    if (nearPlaces != null)
-                        setMarkers();
-
-                }
-            });
-            pDialog.dismiss();
-
-        }
-    }*/
+    @Override
+    protected void onDestroy() {
+        unregisterReceiver(connectivityChangeReceiver);
+        super.onDestroy();
+    }
 }
