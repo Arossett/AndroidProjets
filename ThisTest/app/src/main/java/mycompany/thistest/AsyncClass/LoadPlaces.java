@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.os.AsyncTask;
 import android.text.Html;
+import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
 
@@ -33,6 +34,7 @@ public class LoadPlaces extends AsyncTask<String, String, String> {
 
     @Override
     protected void onPreExecute() {
+
         pDialog = new ProgressDialog(activity);
         pDialog.setMessage(Html.fromHtml("<b>Search</b><br/>Loading Places..."));
         pDialog.setIndeterminate(false);
@@ -62,18 +64,30 @@ public class LoadPlaces extends AsyncTask<String, String, String> {
 
 
     protected void onPostExecute(String file_url) {
+
         activity.runOnUiThread(new Runnable() {
             public void run() {
+
                 if (nearPlaces != null) {
-                    if(activity instanceof PlacesMapActivity) {
-                        ((PlacesMapActivity)activity).setNearPlaces(nearPlaces);
-                        ((PlacesMapActivity)activity).setMarkers();
+
+                    if (activity instanceof PlacesMapActivity) {
+
+                        ((PlacesMapActivity) activity).setNearPlaces(nearPlaces);
+
+                        ((PlacesMapActivity) activity).setMarkers();
+
                     }
                 }
 
             }
         });
-        pDialog.dismiss();
+        try {
+            if (pDialog!=null && pDialog.isShowing())
+                pDialog.dismiss();
+        }catch (Exception e){
+
+        }
+
 
     }
 }

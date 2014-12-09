@@ -86,23 +86,28 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_places_map);
-        utils = new Utils();
+
         connectivityChangeReceiver =  new ConnectivityChangeReceiver(this);
+        registerReceiver(
+                connectivityChangeReceiver,
+                new IntentFilter(
+                        ConnectivityManager.CONNECTIVITY_ACTION));
 
         initParams();
         setCameraListener();
         addButtonsListener();
 
+        if(savedInstanceState!= null){
+            types = savedInstanceState.getString("types");
+            updateMap();
+        }else {
+            types = null;
+        }
         //to display choices window
         if(types ==null) {
             TypesChoice myDiag = new TypesChoice();
             myDiag.show(getFragmentManager(), "Diag");
         }
-
-        registerReceiver(
-                connectivityChangeReceiver,
-                new IntentFilter(
-                        ConnectivityManager.CONNECTIVITY_ACTION));
 
         map.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
             @Override
@@ -113,7 +118,7 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
                 Intent in = new Intent(getApplicationContext(),
                         SinglePlaceActivity.class);
 
-                // Sending place refrence id to single place activity
+                // Sending place refrence id to single place activity stop pretending !!!
                 // place refrence id used to get "Place full details"
                 in.putExtra("reference", reference);
                 startActivity(in);
@@ -187,8 +192,15 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
         return super.dispatchTouchEvent(ev);
     }
 
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        outState.putString("types", types);
+        super.onSaveInstanceState(outState);
+    }
+
     //to initialize parameters of the activity
     private void initParams(){
+        utils = new Utils();
         pos = null;
         markerRef = new HashMap<Marker, String>();
         map = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
@@ -210,7 +222,6 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
                 .fillColor(0x220000FF)
                 .strokeColor(Color.TRANSPARENT);
         circle = map.addCircle(circleOptions);
-        types = null;
     }
 
     //to initialize and set camera listener (to do in OnCreate)
@@ -220,7 +231,20 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
         final GoogleMap.OnCameraChangeListener listener = new GoogleMap.OnCameraChangeListener() {
             @Override
             public void onCameraChange(CameraPosition cameraPosition) {
-                updateMap();
+                if(connectivityChangeReceiver.getConnectivity()) {
+                    if (cameraPosition.zoom >= ZOOM_MIN) {
+                        if ((utils.distFrom(oldPos, cameraPosition.target) > radius / 2 || markerRef.isEmpty()) && isMoving) {
+                            updateMap();
+                        }
+                    } else {
+                        map.clear();
+                        circle = null;
+                        markerRef.clear();
+                        findViewById(R.id.button).setVisibility(View.INVISIBLE);
+                    }
+                }else{
+                    Toast.makeText(getBaseContext(), "Please turn on your connection", Toast.LENGTH_SHORT).show();
+                }
             }
         };
         map.setOnCameraChangeListener(listener);
@@ -229,36 +253,26 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
     public void updateMap(){
         CameraPosition cameraPosition = map.getCameraPosition();
         Log.v("nawak", "camera zoom" + cameraPosition.zoom);
-        if(cameraPosition.zoom>=ZOOM_MIN ){
-            if((utils.distFrom(oldPos, cameraPosition.target) > radius/2||markerRef.isEmpty()) && isMoving){
-                if(connectivityChangeReceiver.getConnectivity()) {
-                    oldPos = cameraPosition.target;
-                    new LoadPlaces(PlacesMapActivity.this, radius, types, cameraPosition.target).execute();
-                    if (pos != null)
-                        pos.remove();
-                    pos = map.addMarker(new MarkerOptions().position(cameraPosition.target));
-                    isMoving = false;
-                    if (circle == null) {
-                        CircleOptions circleOptions = new CircleOptions()
-                                .center(cameraPosition.target)
-                                .radius(max_pos)
-                                .fillColor(0x220000FF)
-                                .strokeColor(Color.TRANSPARENT);
-
-                        circle = map.addCircle(circleOptions);
-                        findViewById(R.id.button).setVisibility(View.VISIBLE);
-                    }
-                }else{
-                    Toast.makeText(getBaseContext(), "Please turn on your connection", Toast.LENGTH_SHORT).show();
-                }
-
-            }
-        }else {
-            map.clear();
-            circle = null;
-            markerRef.clear();
-            findViewById(R.id.button).setVisibility(View.INVISIBLE);
+        oldPos = cameraPosition.target;
+        if(types!=null) {
+            new LoadPlaces(PlacesMapActivity.this, radius, types, cameraPosition.target).execute();
         }
+        if (pos != null) {
+            pos.remove();
+        }
+        pos = map.addMarker(new MarkerOptions().position(cameraPosition.target));
+        isMoving = false;
+        if (circle == null) {
+            CircleOptions circleOptions = new CircleOptions()
+                    .center(cameraPosition.target)
+                    .radius(max_pos)
+                    .fillColor(0x220000FF)
+                    .strokeColor(Color.TRANSPARENT);
+
+            circle = map.addCircle(circleOptions);
+            findViewById(R.id.button).setVisibility(View.VISIBLE);
+        }
+
     }
 
     @Override
@@ -345,9 +359,10 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
         types = "";
         for(String s : list) {
             types = types + "|" + s;
-            new LoadPlaces(PlacesMapActivity.this, radius, types, map.getCameraPosition().target).execute();
             Log.v("types", s);
         }
+        new LoadPlaces(PlacesMapActivity.this, radius, types, map.getCameraPosition().target).execute();
+
         return true;
     }
 
