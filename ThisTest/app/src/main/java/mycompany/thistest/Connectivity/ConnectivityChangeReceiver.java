@@ -24,8 +24,11 @@ public class ConnectivityChangeReceiver
     @Override
     public void onReceive(Context context, Intent intent) {
         debugIntent(intent, "placesLocationConnectivity");
-        if(isConnected)
-            ((PlacesMapActivity)activity).updateMap();
+        ConnectionDetector cd = new ConnectionDetector(activity.getBaseContext());
+
+        if(isConnected&&cd.servicesConnected()) {
+            ((PlacesMapActivity) activity).updateMap();
+        }
     }
 
     private void debugIntent(Intent intent, String tag) {

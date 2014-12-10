@@ -64,7 +64,7 @@ public class GPSTracker extends Service implements LocationListener, Serializabl
                     .isProviderEnabled(LocationManager.NETWORK_PROVIDER);
 
             if (!isGPSEnabled && !isNetworkEnabled) {
-
+                canGetLocation = false;
             } else {
                 this.canGetLocation = true;
                 if (isNetworkEnabled) {

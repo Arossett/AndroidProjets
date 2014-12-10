@@ -54,8 +54,7 @@ public class TypesChoice extends DialogFragment{
             builder.setNegativeButton("Cancel", new DialogInterface.OnClickListener() {
                 @Override
                 public void onClick(DialogInterface dialog, int id) {
-                    mListener.onDialogNegativeClick(TypesChoice.this);
-
+                    dismiss();
                 }
             });
 
@@ -89,7 +88,6 @@ public class TypesChoice extends DialogFragment{
      * Each method passes the DialogFragment in case the host needs to query it. */
     public interface NoticeDialogListener {
         public boolean onDialogPositiveClick(TypesChoice dialog);
-        public boolean onDialogNegativeClick(TypesChoice dialog);
     }
 
     // Use this instance of the interface to deliver action events

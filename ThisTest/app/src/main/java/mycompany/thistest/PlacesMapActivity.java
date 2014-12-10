@@ -1,12 +1,13 @@
 package mycompany.thistest;
 
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Color;
-import android.location.Geocoder;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
+import android.text.Layout;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -14,8 +15,11 @@ import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.RelativeLayout;
+import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
@@ -34,6 +38,7 @@ import java.util.Iterator;
 
 import mycompany.thistest.AsyncClass.GeocodeTask;
 import mycompany.thistest.AsyncClass.LoadPlaces;
+import mycompany.thistest.Connectivity.ConnectionDetector;
 import mycompany.thistest.Connectivity.ConnectivityChangeReceiver;
 import mycompany.thistest.Connectivity.GPSTracker;
 import mycompany.thistest.Dialogs.TypesChoice;
@@ -77,43 +82,84 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
     //to use methods from Utils class
     Utils utils;
 
+    //true if Google Play Services are available
+    boolean isService;
+
+    //to check change of connection
     ConnectivityChangeReceiver connectivityChangeReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
+        ConnectionDetector cd = new ConnectionDetector(getBaseContext());
+        isService = cd.servicesConnected();
+
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_places_map);
 
-        //to check changes of connection
-        connectivityChangeReceiver =  new ConnectivityChangeReceiver(this);
-        registerReceiver(
-                connectivityChangeReceiver,
-                new IntentFilter(
-                        ConnectivityManager.CONNECTIVITY_ACTION));
+        if(isService) {
+            setContentView(R.layout.activity_places_map);
 
-        initParams();
+            connectivityChangeReceiver =  new ConnectivityChangeReceiver(this);
+            registerReceiver(
+                    connectivityChangeReceiver,
+                    new IntentFilter(
+                            ConnectivityManager.CONNECTIVITY_ACTION));
+            initParams();
 
-        //used to restore view when app rotated
-        if(savedInstanceState!= null){
-            types = savedInstanceState.getString("types");
-            oldPos = new LatLng
-                    (savedInstanceState.getDouble("latitude"), savedInstanceState.getDouble("longitude"));
-            //updateMap();
-        }else {
-            types = null;
+            //used to restore view when app rotated
+            if (savedInstanceState != null) {
+                types = savedInstanceState.getString("types");
+                oldPos = new LatLng
+                        (savedInstanceState.getDouble("latitude"), savedInstanceState.getDouble("longitude"));
+                //updateMap();
+            } else {
+                types = null;
+            }
+
+            //add listeners to handle all events
+            setCameraListener();
+            setButtonsListener();
+            setMarkersListener();
+            setLocationButtonListener();
+
+            //to display choices window
+            if (types == null) {
+                TypesChoice myDiag = new TypesChoice();
+                myDiag.setCancelable(false);
+                myDiag.show(getFragmentManager(), "Diag");
+            }
+        }
+        //if Google Services are not available, display a message
+        else{
+            RelativeLayout rl = new RelativeLayout(getApplicationContext());
+            TextView tv = new TextView(getBaseContext());
+            tv.setTextAppearance(getBaseContext(), R.style.AppTheme);
+            tv.setText("Google Play Services are not available, please download or update it and " +
+                    "relaunch application");
+            rl.addView(tv);
+            setContentView(rl);
         }
 
-        //add listeners to handle all events
-        setCameraListener();
-        setButtonsListener();
-        setMarkersListener();
+    }
 
-        //to display choices window
-        if(types ==null) {
-            TypesChoice myDiag = new TypesChoice();
-            myDiag.setCancelable(false);
-            myDiag.show(getFragmentManager(), "Diag");
-        }
+    private void setLocationButtonListener(){
+        map.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener() {
+            @Override
+            public boolean onMyLocationButtonClick() {
+                GPSTracker gps = new GPSTracker(PlacesMapActivity.this);
+                if(!gps.canGetLocation()) {
+                    Toast.makeText(getBaseContext(), "Please enable location access", Toast.LENGTH_SHORT).show();
+
+                    return true;
+                }
+                else{
+                    double lat = gps.getLatitude();
+                    double lng = gps.getLongitude();
+                    map.animateCamera(CameraUpdateFactory.newLatLng(new LatLng(lat, lng)));
+                    return true;
+                }
+
+            }
+        });
     }
 
     //add listener to handle markers when touched
@@ -214,13 +260,11 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
         pos = null;
         markerRef = new HashMap<Marker, String>();
         map = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
-        GPSTracker gps = new GPSTracker(this);
         map.setMyLocationEnabled(true);
         map.setPadding(0, utils.dpToPx(50, getBaseContext()), 0, 0);
 
-        double user_lat = gps.getLatitude();
-        double user_long = gps.getLongitude();
-        oldPos = new LatLng(user_lat, user_long);
+        GPSTracker gps = new GPSTracker(this);
+        oldPos = new LatLng(gps.getLatitude(), gps.getLongitude());
 
         //currentPos = new LatLng(user_lat, user_long);
         radius = 400;
@@ -321,49 +365,52 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
     //to add markers on map following places found
     public void setMarkers(){
         max_pos = 0;
+
+        //clean hash map with previous markets
         for(Marker m : markerRef.keySet())
             m.remove();
-
         markerRef.clear();
 
-        if(nearPlaces.results!= null)
+        //for each place, add a market with properties
+        if(nearPlaces.results!= null) {
             for (Iterator<Place> iterator = nearPlaces.results.iterator(); iterator.hasNext(); ) {
                 Place place = iterator.next();
 
-            double latitude = place.geometry.location.lat; // latitude
-            double longitude = place.geometry.location.lng; // longitude
-            int distance = (int)utils.distFrom(map.getCameraPosition().target, new LatLng(latitude, longitude));
+                double latitude = place.geometry.location.lat; // latitude
+                double longitude = place.geometry.location.lng; // longitude
+                int distance = (int) utils.distFrom(map.getCameraPosition().target, new LatLng(latitude, longitude));
 
-            if(distance<=radius) {
-                max_pos = Math.max(max_pos, distance);
+                if (distance <= radius) {
+                    max_pos = Math.max(max_pos, distance);
 
-                //used when search other that by radar
-                String mDrawableName = place.types[0];
-                String[] str = utils.parseType(types);
-                for (int i = 0; i < str.length; i++) {
-                    if (Arrays.asList(place.types).contains(str[i])) {
-                        mDrawableName = str[i];
-                        break;
+                    //used when search other that by radar
+                    String mDrawableName = place.types[0];
+                    String[] str = utils.parseType(types);
+
+                    for (int i = 0; i < str.length; i++) {
+                        if (Arrays.asList(place.types).contains(str[i])) {
+                            mDrawableName = str[i];
+                            break;
+                        }
                     }
-                }
 
-                int resID = getResources().getIdentifier(mDrawableName, "drawable", getPackageName());
-                Marker m;
-                if (resID == 0) {
-                    m = (map.addMarker(new MarkerOptions()
-                            .position(new LatLng(latitude, longitude))
-                            .title(place.name)));
+                    int resID = getResources().getIdentifier(mDrawableName, "drawable", getPackageName());
+                    Marker m;
+                    if (resID == 0) {
+                        m = (map.addMarker(new MarkerOptions()
+                                .position(new LatLng(latitude, longitude))
+                                .title(place.name)));
+                    } else {
+                        m = (map.addMarker(new MarkerOptions()
+                                .position(new LatLng(latitude, longitude))
+                                .title(place.name)
+                                .icon(BitmapDescriptorFactory.fromResource(resID))));
+                    }
+
+                    markerRef.put(m, place.reference);
                 } else {
-                    m = (map.addMarker(new MarkerOptions()
-                            .position(new LatLng(latitude, longitude))
-                            .title(place.name)
-                            .icon(BitmapDescriptorFactory.fromResource(resID))));
+                    iterator.remove();
                 }
-
-                markerRef.put(m, place.reference);
-            }
-            else{
-               iterator.remove();
             }
         }
         Log.v("distance","distance max = " + max_pos);
@@ -384,10 +431,6 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
         return true;
     }
 
-    @Override
-    public boolean onDialogNegativeClick(TypesChoice dialog) {
-        return false;
-    }
 
     public void setNearPlaces(PlacesList np){
         nearPlaces = np;
@@ -399,7 +442,8 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
 
     @Override
     protected void onDestroy() {
-        unregisterReceiver(connectivityChangeReceiver);
+        if(isService)
+            unregisterReceiver(connectivityChangeReceiver);
         super.onDestroy();
     }
 }
