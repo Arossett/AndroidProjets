@@ -133,8 +133,7 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
             RelativeLayout rl = new RelativeLayout(getApplicationContext());
             TextView tv = new TextView(getBaseContext());
             tv.setTextAppearance(getBaseContext(), R.style.AppTheme);
-            tv.setText("Google Play Services are not available, please download or update it and " +
-                    "relaunch application");
+            tv.setText(R.string.google_services_not_available);
             rl.addView(tv);
             setContentView(rl);
         }
@@ -147,7 +146,7 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
             public boolean onMyLocationButtonClick() {
                 GPSTracker gps = new GPSTracker(PlacesMapActivity.this);
                 if(!gps.canGetLocation()) {
-                    Toast.makeText(getBaseContext(), "Please enable location access", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getBaseContext(), R.string.not_location_access, Toast.LENGTH_SHORT).show();
 
                     return true;
                 }
@@ -230,7 +229,7 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
                 }
                 else
                 {
-                    Toast.makeText(getBaseContext(), "Please turn on your connection",Toast.LENGTH_SHORT ).show();
+                    Toast.makeText(getBaseContext(), R.string.connection_lost,Toast.LENGTH_SHORT ).show();
                 }
             }
         };
@@ -300,7 +299,7 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
                         findViewById(R.id.button).setVisibility(View.INVISIBLE);
                     }
                 }else{
-                    Toast.makeText(getBaseContext(), "Please turn on your connection", Toast.LENGTH_SHORT).show();
+                    Toast.makeText(getBaseContext(), R.string.connection_lost, Toast.LENGTH_SHORT).show();
                 }
             }
         };

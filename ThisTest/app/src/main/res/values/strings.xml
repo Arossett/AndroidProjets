@@ -7,5 +7,8 @@
     <string name="title_activity_single_place">SinglePlaceActivity</string>
     <string name="title_activity_places_map">PlacesMapActivity</string>
     <string name="hello_blank_fragment">Hello blank fragment</string>
-
+    <string name="connection_lost">Please turn on your connection</string>
+    <string name="google_services_not_available">Google Play Services are not available,
+        please download or update it and relaunch application</string>
+    <string name="not_location_access">Please enable location access</string>
 </resources>
