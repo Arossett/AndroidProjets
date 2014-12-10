@@ -56,9 +56,6 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
     //last position where places were displayed
     LatLng oldPos;
 
-    //current position of the camera
-    //LatLng currentPos;
-
     //right if the camera is still moving
     boolean isMoving;
 
@@ -87,6 +84,7 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_places_map);
 
+        //to check changes of connection
         connectivityChangeReceiver =  new ConnectivityChangeReceiver(this);
         registerReceiver(
                 connectivityChangeReceiver,
@@ -94,21 +92,32 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
                         ConnectivityManager.CONNECTIVITY_ACTION));
 
         initParams();
-        setCameraListener();
-        addButtonsListener();
 
+        //used to restore view when app rotated
         if(savedInstanceState!= null){
             types = savedInstanceState.getString("types");
-            updateMap();
+            oldPos = new LatLng
+                    (savedInstanceState.getDouble("latitude"), savedInstanceState.getDouble("longitude"));
+            //updateMap();
         }else {
             types = null;
         }
+
+        //add listeners to handle all events
+        setCameraListener();
+        setButtonsListener();
+        setMarkersListener();
+
         //to display choices window
         if(types ==null) {
             TypesChoice myDiag = new TypesChoice();
+            myDiag.setCancelable(false);
             myDiag.show(getFragmentManager(), "Diag");
         }
+    }
 
+    //add listener to handle markers when touched
+    private void setMarkersListener(){
         map.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
             @Override
             public void onInfoWindowClick(Marker marker) {
@@ -129,17 +138,15 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
             @Override
             public boolean onMarkerClick(Marker marker) {
                 marker.showInfoWindow();
-               map.stopAnimation();
+                map.stopAnimation();
 
                 return true;
             }
         });
-
     }
 
     //to add buttons' listener
-    private void addButtonsListener(){
-
+    private void setButtonsListener(){
         //to set the button used to show places list
         Button b = (Button) findViewById(R.id.button);
         View.OnClickListener onClickListener = new View.OnClickListener() {
@@ -186,6 +193,7 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
 
     @Override
     public boolean dispatchTouchEvent(MotionEvent ev) {
+        //used so the map is not always updated when user is still moving it
         if(ev.getAction()==MotionEvent.ACTION_UP) {
             isMoving = true;
         }
@@ -195,6 +203,8 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         outState.putString("types", types);
+        outState.putDouble("latitude",map.getCameraPosition().target.latitude);
+        outState.putDouble("longitude",map.getCameraPosition().target.longitude);
         super.onSaveInstanceState(outState);
     }
 
@@ -231,12 +241,15 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
         final GoogleMap.OnCameraChangeListener listener = new GoogleMap.OnCameraChangeListener() {
             @Override
             public void onCameraChange(CameraPosition cameraPosition) {
+                //check if internet is enabled
                 if(connectivityChangeReceiver.getConnectivity()) {
+                    //if camera is closed enough and has moved enough to update the map
                     if (cameraPosition.zoom >= ZOOM_MIN) {
                         if ((utils.distFrom(oldPos, cameraPosition.target) > radius / 2 || markerRef.isEmpty()) && isMoving) {
                             updateMap();
                         }
                     } else {
+                        //if zoom is too far, clean the map
                         map.clear();
                         circle = null;
                         markerRef.clear();
@@ -250,29 +263,34 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
         map.setOnCameraChangeListener(listener);
     }
 
+    //update map with places found around new location
     public void updateMap(){
         CameraPosition cameraPosition = map.getCameraPosition();
-        Log.v("nawak", "camera zoom" + cameraPosition.zoom);
+
+        Log.v("zoomCamera", "camera zoom" + cameraPosition.zoom);
+
         oldPos = cameraPosition.target;
+
         if(types!=null) {
             new LoadPlaces(PlacesMapActivity.this, radius, types, cameraPosition.target).execute();
         }
+
         if (pos != null) {
             pos.remove();
         }
         pos = map.addMarker(new MarkerOptions().position(cameraPosition.target));
+
         isMoving = false;
+
         if (circle == null) {
             CircleOptions circleOptions = new CircleOptions()
                     .center(cameraPosition.target)
                     .radius(max_pos)
                     .fillColor(0x220000FF)
                     .strokeColor(Color.TRANSPARENT);
-
             circle = map.addCircle(circleOptions);
             findViewById(R.id.button).setVisibility(View.VISIBLE);
         }
-
     }
 
     @Override
@@ -289,7 +307,7 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //noinspection SimplifiableIfStatement
+        //add choices windows to the menu
         if (id == R.id.action_settings) {
             TypesChoice myDiag=new TypesChoice();
             myDiag.show(getFragmentManager(), "Diag");
