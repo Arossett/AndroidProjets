@@ -24,7 +24,8 @@ public class TypesChoice extends DialogFragment{
         // Use the Builder class for convenient dialog construction
         final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         mSelectedItems = new ArrayList();  // Where we track the selected items
-        final String[] types = {"restaurant", "bar","cafe", "bakery", "store", "zoo", "aquarium"};
+        final String[] types = {"restaurant", "bar","cafe", "bakery", "store", "subway_station", "bus_station"
+        };
 
         builder.setTitle("Types")
                 // Specify the list array, the items to be selected by default (null for none),

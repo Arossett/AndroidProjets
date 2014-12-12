@@ -44,6 +44,7 @@ public class Place implements Serializable {
     @Key
     public String[] types;
 
+
     @Override
     public String toString() {
         return name + " - " + id + " - " + reference;
