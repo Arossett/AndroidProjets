@@ -24,7 +24,7 @@ public class TypesChoice extends DialogFragment{
         // Use the Builder class for convenient dialog construction
         final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         mSelectedItems = new ArrayList();  // Where we track the selected items
-        final String[] types = {"restaurant", "bar","cafe", "bakery", "store", "subway_station", "bus_station"
+        final String[] types = {"restaurant", "bar","cafe", "train_station", "store", "subway_station", "bus_station"
         };
 
         builder.setTitle("Types")
@@ -38,9 +38,9 @@ public class TypesChoice extends DialogFragment{
                                 if (isChecked) {
                                     // If the user checked the item, add it to the selected items
                                     mSelectedItems.add(types[which]);
-                                } else if (mSelectedItems.contains(which)) {
+                                } else if (mSelectedItems.contains(types[which])) {
                                     // Else, if the item is already in the array, remove it
-                                    mSelectedItems.remove(Integer.valueOf(which));
+                                    mSelectedItems.remove(types[which]);
                                 }
                                if(mSelectedItems.size()==1) {
                                    enablePositiveButton();

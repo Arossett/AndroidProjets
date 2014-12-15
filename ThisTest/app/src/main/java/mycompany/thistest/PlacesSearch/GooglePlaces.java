@@ -62,6 +62,7 @@ public class GooglePlaces {
 
             if(types != null)
                 request.getUrl().put("types", types);
+            Log.d("googleplacesurl", request.execute().parseAsString());
 
             PlacesList list = request.execute().parseAs(PlacesList.class);
             // Check log cat for places response status

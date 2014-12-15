@@ -27,7 +27,7 @@ import mycompany.thistest.PlacesSearch.PlacesList;
 import mycompany.thistest.UI.SeparatedAdapter;
 
 
-public class MainActivity extends FragmentActivity /*implements LocListener*/ {
+public class PlacesListActivity extends FragmentActivity /*implements LocListener*/ {
 
 
     // Alert Dialog Manager
@@ -172,7 +172,7 @@ public class MainActivity extends FragmentActivity /*implements LocListener*/ {
                         }
 
 
-                        separatedAdapter.addSection(types[i], new SimpleAdapter(MainActivity.this, placesListItems,
+                        separatedAdapter.addSection(types[i], new SimpleAdapter(PlacesListActivity.this, placesListItems,
                                 R.layout.list_item,
                                 new String[]{KEY_REFERENCE, KEY_NAME}, new int[]{
                                 R.id.reference, R.id.name}));

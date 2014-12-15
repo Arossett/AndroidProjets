@@ -1,6 +1,9 @@
 package mycompany.thistest;
 
 import android.app.Activity;
+import android.app.FragmentManager;
+import android.app.FragmentTransaction;
+import android.content.ClipData;
 import android.os.Bundle;
 
 
@@ -14,6 +17,7 @@ import android.widget.RatingBar;
 import android.widget.TextView;
 
 import mycompany.thistest.AsyncClass.LoadPlaceDetails;
+import mycompany.thistest.AsyncClass.LoadPlacesTFL;
 import mycompany.thistest.Connectivity.ConnectionDetector;
 import mycompany.thistest.Dialogs.AlertDialogManager;
 import mycompany.thistest.PlacesSearch.GooglePlaces;
@@ -51,6 +55,7 @@ public class SinglePlaceActivity extends Activity {
 
         // Calling a Async Background thread
         new LoadPlaceDetails(SinglePlaceActivity.this, googlePlaces).execute(reference);
+
     }
 
     public void setPlaceDetails(PlaceDetails pD){
@@ -76,7 +81,6 @@ public class SinglePlaceActivity extends Activity {
                     String types = placeDetails.result.types[0];
 
                     Log.d("Types ", types);
-
 
                     Log.d("Place ", name + address + phone + latitude + longitude );
 
@@ -106,6 +110,15 @@ public class SinglePlaceActivity extends Activity {
                     lbl_address.setText(address);
                     lbl_phone.setText(Html.fromHtml("<b>Phone:</b> " + phone));
                     lbl_location.setText(Html.fromHtml("<b>Latitude:</b> " + latitude + ", <b>Longitude:</b> " + longitude));
+
+                    if(types.contains("subway_station")) {
+                        ForecastList frag1 = ForecastList.newInstance("subway_station", name);
+                        FragmentManager fm=getFragmentManager();
+                        FragmentTransaction ft=fm.beginTransaction();
+                        ft.add(R.id.container, frag1);
+                        ft.commit();
+                    }
+
                 }
             }
             else if(status.equals("ZERO_RESULTS")){
@@ -149,57 +162,5 @@ public class SinglePlaceActivity extends Activity {
                     false);
         }
     }
-
-
-    /**
-     * Background Async Task to Load Google places
-     * */
-   /* class LoadSinglePlaceDetails extends AsyncTask<String, String, String> {
-        // Progress dialog
-        ProgressDialog pDialog;
-
-        @Override
-        protected void onPreExecute() {
-            super.onPreExecute();
-            pDialog = new ProgressDialog(SinglePlaceActivity.this);
-            pDialog.setMessage("Loading profile ...");
-            pDialog.setIndeterminate(false);
-            pDialog.setCancelable(false);
-            pDialog.show();
-        }
-
-
-        protected String doInBackground(String... args) {
-            String reference = args[0];
-
-            // creating Places class object
-            googlePlaces = new GooglePlaces();
-
-            // Check if used is connected to Internet
-            try {
-                placeDetails = googlePlaces.getPlaceDetails(reference);
-
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-            return null;
-        }
-
-
-        protected void onPostExecute(String file_url) {
-            // dismiss the dialog after getting all products
-            pDialog.dismiss();
-            // updating UI from Background Thread
-            runOnUiThread(new Runnable() {
-                public void run() {
-
-
-
-                }
-            });
-
-        }
-
-    }*/
 
 }

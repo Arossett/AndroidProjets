@@ -1,13 +1,11 @@
 package mycompany.thistest;
 
 import android.app.Activity;
-import android.app.AlertDialog;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Color;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
-import android.text.Layout;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
@@ -19,7 +17,6 @@ import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
@@ -44,6 +41,7 @@ import mycompany.thistest.Connectivity.GPSTracker;
 import mycompany.thistest.Dialogs.TypesChoice;
 import mycompany.thistest.PlacesSearch.Place;
 import mycompany.thistest.PlacesSearch.PlacesList;
+import mycompany.thistest.AsyncClass.LoadPlacesTFL;
 
 
 public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDialogListener {
@@ -199,7 +197,7 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
             public void onClick(View v) {
                 if(map.getCameraPosition().zoom>ZOOM_MIN) {
                     Intent i = new Intent(getApplicationContext(),
-                            MainActivity.class);
+                            PlacesListActivity.class);
                     // passing near places to map activity
                     i.putExtra("near_places", nearPlaces);
                     i.putExtra("types", types);
@@ -423,7 +421,6 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
         types = "";
         for(String s : list) {
             types = types + "|" + s;
-            Log.v("types", s);
         }
         new LoadPlaces(PlacesMapActivity.this, radius, types, map.getCameraPosition().target).execute();
 
@@ -445,4 +442,6 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
             unregisterReceiver(connectivityChangeReceiver);
         super.onDestroy();
     }
+
+
 }
