@@ -28,9 +28,24 @@ public class Station {
 
     @Key
     public String commonName;
+
     @Key
     double lat;
+
     @Key
     double lon;
+
+    List<Arrivals> arrivals;
+
+    public void setArrivals(List<Arrivals> arr){
+        arrivals = arr;
+    }
+    public List<Arrivals> getArrivals(){
+        return arrivals;
+    }
+
+    public String getNaptanId(){
+        return naptanId;
+    }
 
 }

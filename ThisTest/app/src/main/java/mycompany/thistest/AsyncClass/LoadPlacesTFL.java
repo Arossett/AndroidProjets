@@ -9,13 +9,14 @@ import java.util.ArrayList;
 import java.util.List;
 
 import mycompany.thistest.TFLPlaces.Arrivals;
+import mycompany.thistest.TFLPlaces.Station;
 import mycompany.thistest.TFLPlaces.StationsList;
 import mycompany.thistest.TFLPlaces.TFLSearch;
 
 /**
  * Created by trsq9010 on 08/12/2014.
  */
-public class LoadPlacesTFL extends AsyncTask<String, String, List<Arrivals> >{
+public class LoadPlacesTFL extends AsyncTask<String, String, StationsList>{
 
     StationsList stationsList ;
     String stationName;
@@ -32,7 +33,7 @@ public class LoadPlacesTFL extends AsyncTask<String, String, List<Arrivals> >{
     }
 
 
-    protected List<Arrivals> doInBackground(String... args) {
+    protected StationsList doInBackground(String... args) {
 
         // creating Places class object
         TFLSearch stationsSearch = new TFLSearch();
@@ -41,8 +42,8 @@ public class LoadPlacesTFL extends AsyncTask<String, String, List<Arrivals> >{
 
             // get nearest places
             stationsList = stationsSearch.searchbyArea( "Metro",51.49, -0.27, 1000);
-            List<Arrivals> arrivals = stationsSearch.searchArrivals();
-            return arrivals;
+            //List<Arrivals> arrivals = stationsSearch.searchArrivals();
+            return stationsList;
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -51,12 +52,12 @@ public class LoadPlacesTFL extends AsyncTask<String, String, List<Arrivals> >{
     }
 
 
-    protected void onPostExecute(List<Arrivals> arrivals) {
-      /*  ArrayList<String> nextTrains = new ArrayList<String>();
-        for(Arrivals a: arrivals) {
-            nextTrains.add(a.toString());
-            Log.v("nawak", a.toString());
-        }*/
+    protected void onPostExecute(StationsList stationsList) {
+
+        for(Station s: stationsList.stopPoints) {
+
+            Log.v("nawak", s.getArrivals().get(0).toString());
+        }
 
 
     }

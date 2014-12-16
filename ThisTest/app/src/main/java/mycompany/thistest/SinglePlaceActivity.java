@@ -55,7 +55,6 @@ public class SinglePlaceActivity extends Activity {
 
         // Calling a Async Background thread
         new LoadPlaceDetails(SinglePlaceActivity.this, googlePlaces).execute(reference);
-
     }
 
     public void setPlaceDetails(PlaceDetails pD){

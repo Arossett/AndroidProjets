@@ -31,13 +31,8 @@ public class TFLSearch {
     private static final String API_KEY = "AIzaSyCEKx1Gh_u5r8yEulPe3MyLH_ZOcrPgHTc";
 
     // Google Places serach url's
-    private static final String PLACES_SEARCH_URL = "http://api.tfl.gov.uk/StopPoint/Search/";
     private static final String ARRIVALS_SEARCH_URL = "http://api.tfl.gov.uk/StopPoint/Bids/Arrivals";
-    private static final String PLACES_SEARCH_BY_AREA = "http://http://api.tfl.gov.uk/StopPoint?";
-
-    private double _latitude;
-    private double _longitude;
-    private double _radius;
+    private static final String PLACES_SEARCH_BY_AREA = "http://api.tfl.gov.uk/StopPoint?";
 
     /**
      * Searching places
@@ -69,7 +64,7 @@ public class TFLSearch {
 
     }*/
 
-    public StationsList searchbyArea(String type, double latitude, double longitude, double radius)
+    public StationsList searchbyArea(String type, double latitude, double longitude, int radius)
             throws Exception {
 
         try {
@@ -81,18 +76,20 @@ public class TFLSearch {
 
             request.getUrl().put("lat", latitude);
             request.getUrl().put("lon", longitude);
-            request.getUrl().put("lat", latitude);
+            request.getUrl().put("radius", radius);
 
             if(type.equals("Metro")){
-                request.getUrl().put("stopTypes", "NaptanRailStation+NaptanMetroStation");
-
-                request.getUrl().put("modes", "tube+overground+dlr");
-
+                request.getUrl().put("stopTypes", "NaptanRailStation + NaptanMetroStation");
+                request.getUrl().put("modes", "tube + overground + dlr");
             }
-            Log.d("nawak", "url : "+request.getUrl().toString());
-            Log.d("nawak", "json : "+request.execute().parseAsString());
+
             StationsList list = request.execute().parseAs(StationsList.class);
-            Log.d("nawak", list.stopPoints.get(0).commonName);
+
+            for(Station s : list.stopPoints){
+                List<Arrivals> arr = searchArrivals(s.getNaptanId());
+                s.setArrivals(arr);
+            }
+
             return list;
 
         } catch (JsonSyntaxException e) {
@@ -104,19 +101,17 @@ public class TFLSearch {
     }
 
 
-    public List<Arrivals> searchArrivals()
+    public List<Arrivals> searchArrivals(String id)
             throws Exception {
 
         try {
-
-            //StationsList list = search(s);
 
             HttpRequestFactory httpRequestFactory = createRequestFactory(HTTP_TRANSPORT);
 
             HttpRequest request = httpRequestFactory
                     .buildGetRequest(new GenericUrl(ARRIVALS_SEARCH_URL));
 
-            request.getUrl().put("ids", "940GZZLUTNG");
+            request.getUrl().put("ids", id);
             Gson gson = new Gson();
 
             Type ListType = new TypeToken<List<Arrivals>>(){}.getType();
