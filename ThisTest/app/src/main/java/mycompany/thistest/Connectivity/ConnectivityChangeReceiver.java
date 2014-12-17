@@ -5,7 +5,11 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.os.Bundle;
+import android.os.Message;
 import android.util.Log;
+import android.widget.Toast;
+
+import android.os.Handler;
 
 import mycompany.thistest.PlacesMapActivity;
 
@@ -13,22 +17,32 @@ public class ConnectivityChangeReceiver
         extends BroadcastReceiver {
 
     boolean isConnected;
-    Activity activity;
+    private final Handler handler; // Handler used to execute code on the UI thread
 
-    public ConnectivityChangeReceiver(Activity a){
-        isConnected = false;
-        activity = a;
+    public ConnectivityChangeReceiver(Handler h){
+        handler = h;
+        isConnected = true;
 
     }
 
     @Override
     public void onReceive(Context context, Intent intent) {
         debugIntent(intent, "placesLocationConnectivity");
-        ConnectionDetector cd = new ConnectionDetector(activity.getBaseContext());
+       // ConnectionDetector cd = new ConnectionDetector(activity.getBaseContext());
+       handler.post(new Runnable() {
+            @Override
+            public void run() {
+                Bundle messageBundle=new Bundle();
+                Message myMessage=handler.obtainMessage();
+                //Ajouter des données à transmettre au Handler via le Bundle
+                messageBundle.putBoolean("isConnected", isConnected);
+                //Ajouter le Bundle au message
+                myMessage.setData(messageBundle);
+                //Envoyer le message
+                handler.sendMessage(myMessage);
 
-        if(isConnected&&cd.servicesConnected()) {
-            ((PlacesMapActivity) activity).updateMap();
-        }
+            }
+        });
     }
 
     private void debugIntent(Intent intent, String tag) {

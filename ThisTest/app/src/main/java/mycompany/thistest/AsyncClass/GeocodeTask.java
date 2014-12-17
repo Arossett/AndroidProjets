@@ -9,6 +9,7 @@ import android.util.Log;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdateFactory;
+import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.LatLng;
 
 import java.io.IOException;
@@ -22,9 +23,10 @@ public class GeocodeTask extends AsyncTask<String, Void, List<Address>> {
    private Context context;
    LatLng posFound;
    Activity activity;
-
-    public GeocodeTask(Activity a){
-       activity = a;
+    GoogleMap map;
+    public GeocodeTask(Activity a, GoogleMap m){
+      activity = a;
+        map = m;
        posFound = new LatLng(0,0);
 
 
@@ -64,11 +66,12 @@ public class GeocodeTask extends AsyncTask<String, Void, List<Address>> {
 
            // Creating an instance of GeoPoint, to display in Google Map
            posFound = new LatLng(address.getLatitude(), address.getLongitude());
+map.animateCamera(CameraUpdateFactory.newLatLng(posFound));/*
+           //get map linked to the activity to make camera move
            if(activity instanceof PlacesMapActivity) {
                PlacesMapActivity pl = (PlacesMapActivity) activity;
-               //pl.setCurrentPos(posFound);
                pl.getMap().animateCamera(CameraUpdateFactory.newLatLng(posFound));
-           }
+           }*/
 
        }
    }

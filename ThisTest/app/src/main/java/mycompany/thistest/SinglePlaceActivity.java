@@ -3,13 +3,10 @@ package mycompany.thistest;
 import android.app.Activity;
 import android.app.FragmentManager;
 import android.app.FragmentTransaction;
-import android.content.ClipData;
 import android.os.Bundle;
 
 
-import android.app.ProgressDialog;
 import android.content.Intent;
-import android.os.AsyncTask;
 import android.text.Html;
 import android.util.Log;
 import android.view.View;
@@ -17,8 +14,7 @@ import android.widget.RatingBar;
 import android.widget.TextView;
 
 import mycompany.thistest.AsyncClass.LoadPlaceDetails;
-import mycompany.thistest.AsyncClass.LoadPlacesTFL;
-import mycompany.thistest.Connectivity.ConnectionDetector;
+import mycompany.thistest.Connectivity.GoogleServicesConnectionDetector;
 import mycompany.thistest.Dialogs.AlertDialogManager;
 import mycompany.thistest.PlacesSearch.GooglePlaces;
 import mycompany.thistest.PlacesSearch.PlaceDetails;
@@ -28,7 +24,7 @@ public class SinglePlaceActivity extends Activity {
     Boolean isInternetPresent = false;
 
     // Connection detector class
-    ConnectionDetector cd;
+    GoogleServicesConnectionDetector cd;
 
     // Alert Dialog Manager
     AlertDialogManager alert = new AlertDialogManager();

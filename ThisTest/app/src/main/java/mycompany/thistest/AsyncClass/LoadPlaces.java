@@ -70,11 +70,10 @@ public class LoadPlaces extends AsyncTask<String, String, String> {
 
                 if (nearPlaces != null) {
 
+                    //if you want to show nearPlaces on a map linked to the activity
                     if (activity instanceof PlacesMapActivity) {
-
-                        ((PlacesMapActivity) activity).setNearPlaces(nearPlaces);
-
-                        ((PlacesMapActivity) activity).setMarkers();
+                        //the activity should have a method to get a customizedMap
+                         ((PlacesMapActivity) activity).getMap().setNearPlaces(nearPlaces);
 
                     }
                 }

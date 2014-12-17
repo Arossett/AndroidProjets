@@ -55,7 +55,7 @@ public class LoadPlacesTFL extends AsyncTask<String, String, StationsList>{
     protected void onPostExecute(StationsList stationsList) {
 
         for(Station s: stationsList.stopPoints) {
-
+            if(!s.getArrivals().isEmpty())
             Log.v("nawak", s.getArrivals().get(0).toString());
         }
 

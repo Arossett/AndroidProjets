@@ -14,14 +14,14 @@ import com.google.android.gms.internal.ca;
 
 import mycompany.thistest.Dialogs.AlertDialogManager;
 
-public class ConnectionDetector {
+public class GoogleServicesConnectionDetector {
 
     private Context _context;
     private final static int
             CONNECTION_FAILURE_RESOLUTION_REQUEST = 9000;
 
 
-    public ConnectionDetector(Context context){
+    public GoogleServicesConnectionDetector(Context context){
         this._context = context;
 
     }
