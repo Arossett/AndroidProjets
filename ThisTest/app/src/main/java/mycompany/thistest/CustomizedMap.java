@@ -20,12 +20,15 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.List;
 
 import mycompany.thistest.AsyncClass.GeocodeTask;
 import mycompany.thistest.AsyncClass.LoadPlaces;
+import mycompany.thistest.AsyncClass.LoadPlacesTFL;
 import mycompany.thistest.Connectivity.GPSTracker;
 import mycompany.thistest.PlacesSearch.Place;
 import mycompany.thistest.PlacesSearch.PlacesList;
@@ -33,7 +36,7 @@ import mycompany.thistest.PlacesSearch.PlacesList;
 /**
  * Created by trsq9010 on 16/12/2014.
  */
-public class CustomizeMap  {
+public class CustomizedMap {
 
     public static final float ZOOM_MIN = 14.5f;
     // Nearest places
@@ -52,7 +55,7 @@ public class CustomizeMap  {
     HashMap<Marker, String> markerRef;
 
     //radius of the perimeter where we look for places
-    double radius;
+    int radius;
 
     //last position where places were displayed
     LatLng oldPos;
@@ -62,6 +65,8 @@ public class CustomizeMap  {
 
     String types;
 
+    String[] transports;
+
     //marker of the camera, needed to remove marker from previous location
     Marker pos;
 
@@ -69,7 +74,7 @@ public class CustomizeMap  {
 
     boolean isConnected;
 
-    public CustomizeMap(GoogleMap m, PlacesMapActivity mapActivity){
+    public CustomizedMap(GoogleMap m, PlacesMapActivity mapActivity){
         activity = mapActivity;
         map = m;
         map.setMyLocationEnabled(true);
@@ -81,9 +86,10 @@ public class CustomizeMap  {
         oldPos = new LatLng(gps.getLatitude(), gps.getLongitude());
         isMoving = true;
         isConnected = true;
+        transports = null;
 
         //currentPos = new LatLng(user_lat, user_long);
-        radius = 400;
+        radius = activity.getResources().getInteger(R.integer.radius);
         max_pos = 0;
 
         CircleOptions circleOptions = new CircleOptions()
@@ -266,6 +272,8 @@ public class CustomizeMap  {
             circle = map.addCircle(circleOptions);
             activity.findViewById(R.id.button).setVisibility(View.VISIBLE);
         }
+        if(transports !=null)
+        setTransports(transports);
     }
 
     public void setNearPlaces(PlacesList np){
@@ -331,6 +339,14 @@ public class CustomizeMap  {
         }catch (Exception e) {
             Log.e("FindButton", "doesn't exist");
         }
+    }
+
+    public void setTransports(String[] type){
+        transports = type;
+        double lat = map.getCameraPosition().target.latitude;
+        double lon = map.getCameraPosition().target.longitude;
+        for(String s : type)
+        new LoadPlacesTFL(s,lat, lon, radius).execute();
     }
 
 }

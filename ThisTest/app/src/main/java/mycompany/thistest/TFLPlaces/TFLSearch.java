@@ -82,13 +82,25 @@ public class TFLSearch {
                 request.getUrl().put("stopTypes", "NaptanRailStation + NaptanMetroStation");
                 request.getUrl().put("modes", "tube + overground + dlr");
             }
+            else if(type.equals("Train")){
+                request.getUrl().put("stopTypes", "NaptanRailStation");
+                request.getUrl().put("modes", "national-rail");
+            }
+            else if(type.equals("Bus")){
+                request.getUrl().put("stopTypes", "NaptanPublicBusCoachTram");
+                request.getUrl().put("modes", "bus");
+            }
+            else{
+                request.getUrl().put("stopTypes", "NaptanPublicBusCoachTram");
+                request.getUrl().put("modes", "bus");
+            }
 
             StationsList list = request.execute().parseAs(StationsList.class);
 
-            for(Station s : list.stopPoints){
+            /*for(Station s : list.stopPoints){
                 List<Arrivals> arr = searchArrivals(s.getNaptanId());
                 s.setArrivals(arr);
-            }
+            }*/
 
             return list;
 

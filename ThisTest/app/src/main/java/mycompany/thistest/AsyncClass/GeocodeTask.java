@@ -20,10 +20,11 @@ import mycompany.thistest.PlacesMapActivity;
 
 public class GeocodeTask extends AsyncTask<String, Void, List<Address>> {
 
-   private Context context;
    LatLng posFound;
    Activity activity;
     GoogleMap map;
+
+    //need an activity and a map
     public GeocodeTask(Activity a, GoogleMap m){
       activity = a;
         map = m;
@@ -55,7 +56,7 @@ public class GeocodeTask extends AsyncTask<String, Void, List<Address>> {
    protected void onPostExecute(List<Address> addresses) {
 
        if(addresses==null || addresses.size()==0){
-           Toast.makeText(context, "No Location found", Toast.LENGTH_SHORT).show();
+           Toast.makeText(activity.getBaseContext(), "No Location found", Toast.LENGTH_SHORT).show();
            return;
        }
 
@@ -66,7 +67,7 @@ public class GeocodeTask extends AsyncTask<String, Void, List<Address>> {
 
            // Creating an instance of GeoPoint, to display in Google Map
            posFound = new LatLng(address.getLatitude(), address.getLongitude());
-map.animateCamera(CameraUpdateFactory.newLatLng(posFound));/*
+            map.animateCamera(CameraUpdateFactory.newLatLng(posFound));/*
            //get map linked to the activity to make camera move
            if(activity instanceof PlacesMapActivity) {
                PlacesMapActivity pl = (PlacesMapActivity) activity;

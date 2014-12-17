@@ -48,8 +48,8 @@ public class ForecastList extends Fragment {
         args.putString(ARG_PARAM1, param1);
         args.putString(ARG_PARAM2, param2);
         fragment.setArguments(args);
-        LoadPlacesTFL placesTFL = new LoadPlacesTFL(param2);
-        placesTFL.execute();
+       // LoadPlacesTFL placesTFL = new LoadPlacesTFL(param2);
+       // placesTFL.execute();
         return fragment;
     }
 

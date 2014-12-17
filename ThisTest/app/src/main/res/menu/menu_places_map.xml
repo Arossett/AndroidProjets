@@ -3,4 +3,6 @@
     tools:context="mycompany.thistest.PlacesMapActivity">
     <item android:id="@+id/action_settings" android:title="Change Places Types"
         android:orderInCategory="100" android:showAsAction="never" />
+    <item android:id="@+id/transport_settings" android:title="Change Transport Types"
+        android:orderInCategory="100" android:showAsAction="never" />
 </menu>

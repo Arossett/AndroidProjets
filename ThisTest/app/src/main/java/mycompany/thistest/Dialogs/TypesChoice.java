@@ -17,6 +17,8 @@ import java.util.ArrayList;
 public class TypesChoice extends DialogFragment{
     ArrayList<String> mSelectedItems;
     AlertDialog alertDialog;
+    int type_id;
+
 
     @Override
     public Dialog onCreateDialog(Bundle savedInstanceState) {
@@ -24,9 +26,8 @@ public class TypesChoice extends DialogFragment{
         // Use the Builder class for convenient dialog construction
         final AlertDialog.Builder builder = new AlertDialog.Builder(getActivity());
         mSelectedItems = new ArrayList();  // Where we track the selected items
-        final String[] types = {"restaurant", "bar","cafe", "train_station", "store", "subway_station", "bus_station"
-        };
-
+        type_id = getArguments().getInt("search_id");
+        final String[] types = getArguments().getStringArray("types");
         builder.setTitle("Types")
                 // Specify the list array, the items to be selected by default (null for none),
                 // and the listener through which to receive callbacks when items are selected
@@ -111,6 +112,9 @@ public class TypesChoice extends DialogFragment{
 
     public ArrayList getmSelectedItems(){
         return mSelectedItems;
+    }
+    public int getTypeId(){
+        return type_id;
     }
 
 }

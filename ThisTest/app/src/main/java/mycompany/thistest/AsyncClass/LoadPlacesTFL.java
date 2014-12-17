@@ -19,10 +19,16 @@ import mycompany.thistest.TFLPlaces.TFLSearch;
 public class LoadPlacesTFL extends AsyncTask<String, String, StationsList>{
 
     StationsList stationsList ;
-    String stationName;
+    String type;
+    double latitude;
+    double longitude;
+    int radius;
 
-    public LoadPlacesTFL(String name){
-        stationName = name;
+    public LoadPlacesTFL(String t, double lat, double lon, int r){
+        type = t;
+        latitude = lat;
+        longitude = lon;
+        radius = r;
     }
 
     @Override
@@ -41,7 +47,7 @@ public class LoadPlacesTFL extends AsyncTask<String, String, StationsList>{
         try {
 
             // get nearest places
-            stationsList = stationsSearch.searchbyArea( "Metro",51.49, -0.27, 1000);
+            stationsList = stationsSearch.searchbyArea(type, latitude, longitude, radius);
             //List<Arrivals> arrivals = stationsSearch.searchArrivals();
             return stationsList;
 
@@ -55,8 +61,8 @@ public class LoadPlacesTFL extends AsyncTask<String, String, StationsList>{
     protected void onPostExecute(StationsList stationsList) {
 
         for(Station s: stationsList.stopPoints) {
-            if(!s.getArrivals().isEmpty())
-            Log.v("nawak", s.getArrivals().get(0).toString());
+            if(s.commonName!= null)
+            Log.v("nawak", s.commonName);
         }
 
 

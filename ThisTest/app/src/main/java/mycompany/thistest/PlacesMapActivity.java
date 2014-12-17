@@ -12,17 +12,17 @@ import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
-import android.widget.EditText;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
 import com.google.android.gms.maps.model.LatLng;
 
+import java.lang.reflect.Array;
 import java.util.ArrayList;
-import mycompany.thistest.AsyncClass.GeocodeTask;
+import java.util.List;
+
 import mycompany.thistest.Connectivity.GoogleServicesConnectionDetector;
 import mycompany.thistest.Connectivity.ConnectivityChangeReceiver;
 import mycompany.thistest.Dialogs.TypesChoice;
@@ -32,7 +32,7 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
 
     public static final float ZOOM_MIN = 14.5f;
 
-    CustomizeMap map;
+    CustomizedMap map;
 
     //types of places to find
     String types;
@@ -54,7 +54,7 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
             setContentView(R.layout.activity_places_map);
 
             GoogleMap m = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
-            map = new CustomizeMap(m, this);
+            map = new CustomizedMap(m, this);
 
             connectivityChangeReceiver =  new ConnectivityChangeReceiver(new Handler() {
                 public void handleMessage(Message msg) {
@@ -82,6 +82,10 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
             //to display choices window
             if (types == null) {
                 TypesChoice myDiag = new TypesChoice();
+                Bundle diagBundle = new Bundle();
+                diagBundle.putStringArray("types",getResources().getStringArray(R.array.place_types));
+                diagBundle.putInt("search_id", R.id.action_settings);
+                myDiag.setArguments(diagBundle);
                 myDiag.setCancelable(false);
                 myDiag.show(getFragmentManager(), "Diag");
             }
@@ -154,25 +158,61 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
         //add choices windows to the menu
         if (id == R.id.action_settings) {
             TypesChoice myDiag=new TypesChoice();
+            Bundle diagBundle = new Bundle();
+            diagBundle.putStringArray("types",getResources().getStringArray(R.array.place_types));
+            diagBundle.putInt("search_id", R.id.action_settings);
+            myDiag.setArguments(diagBundle);
             myDiag.show(getFragmentManager(), "Diag");
             return true;
         }
+
+        //add choices windows to the menu
+        if (id == R.id.transport_settings) {
+            TypesChoice myDiag=new TypesChoice();
+            Bundle diagBundle = new Bundle();
+            diagBundle.putStringArray("types",getResources().getStringArray(R.array.transport_types));
+
+            diagBundle.putInt("search_id", R.id.transport_settings);
+            myDiag.setArguments(diagBundle);
+            myDiag.show(getFragmentManager(), "Diag");
+            return true;
+        }
+
+
 
         return super.onOptionsItemSelected(item);
     }
 
     @Override
     public boolean onDialogPositiveClick(TypesChoice dialog) {
+
         ArrayList<String> list = dialog.getmSelectedItems();
-        types = "";
-        for(String s : list) {
-            types = types + "|" + s;
+        int id = dialog.getTypeId();
+
+        switch (id){
+            case R.id.action_settings: {
+                types = "";
+                for (String s : list) {
+                    types = types + "|" + s;
+                }
+                map.setTypes(types);
+                break;
+            }
+            case R.id.transport_settings: {
+
+                String[] myArray = list.toArray(new String[list.size()]);
+                map.setTransports(myArray);
+                break;
+            }
+            default:{
+                break;
+            }
         }
-        map.setTypes(types);
+
         return true;
     }
 
-    public CustomizeMap getMap(){
+    public CustomizedMap getMap(){
         return map;
     }
 

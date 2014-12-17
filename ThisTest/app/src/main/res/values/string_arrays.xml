@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array
+        name="place_types">
+        <item>restaurant</item>
+        <item>bar</item>
+        <item>bakery</item>
+        <item>cafe</item>
+        <item>store</item>
+    </string-array>
+
+    <string-array
+        name="transport_types">
+        <item>Metro</item>
+        <item>Train</item>
+        <item>Bus</item>
+        <item>Bicycle</item>
+    </string-array>
+</resources>
