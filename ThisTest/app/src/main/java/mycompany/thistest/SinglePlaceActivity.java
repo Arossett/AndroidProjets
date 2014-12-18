@@ -73,9 +73,6 @@ public class SinglePlaceActivity extends Activity {
                     String rating = null;
                     if(placeDetails.result.rating!=null)
                         rating = Double.toString(placeDetails.result.rating);
-                    String types = placeDetails.result.types[0];
-
-                    Log.d("Types ", types);
 
                     Log.d("Place ", name + address + phone + latitude + longitude );
 
@@ -105,14 +102,6 @@ public class SinglePlaceActivity extends Activity {
                     lbl_address.setText(address);
                     lbl_phone.setText(Html.fromHtml("<b>Phone:</b> " + phone));
                     lbl_location.setText(Html.fromHtml("<b>Latitude:</b> " + latitude + ", <b>Longitude:</b> " + longitude));
-
-                    if(types.contains("subway_station")) {
-                        ForecastList frag1 = ForecastList.newInstance("subway_station", name);
-                        FragmentManager fm=getFragmentManager();
-                        FragmentTransaction ft=fm.beginTransaction();
-                        ft.add(R.id.container, frag1);
-                        ft.commit();
-                    }
 
                 }
             }

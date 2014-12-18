@@ -2,15 +2,16 @@ package mycompany.thistest.PlacesSearch;
 
 
 import java.io.Serializable;
-import java.lang.reflect.Array;
 
 import com.google.api.client.util.Key;
+
+import mycompany.thistest.Spot;
 
 /** Implement this class from "Serializable"
  * So that you can pass this class Object to another using Intents
  * Otherwise you can't pass to another actitivy
  * */
-public class Place implements Serializable {
+public class Place implements Serializable, Spot {
     @Key
     public String place_id;
 
@@ -48,6 +49,31 @@ public class Place implements Serializable {
     @Override
     public String toString() {
         return name + " - " + id + " - " + reference;
+    }
+
+    @Override
+    public String getName() {
+        return name;
+    }
+
+    @Override
+    public String getId() {
+        return reference;
+    }
+
+    @Override
+    public double getLongitude() {
+        return geometry.location.lng;
+    }
+
+    @Override
+    public double getLatitude() {
+        return geometry.location.lat;
+    }
+
+    @Override
+    public String getType() {
+        return "restaurant";
     }
 
     public static class Geometry implements Serializable

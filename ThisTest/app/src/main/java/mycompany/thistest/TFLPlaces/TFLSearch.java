@@ -97,10 +97,9 @@ public class TFLSearch {
 
             StationsList list = request.execute().parseAs(StationsList.class);
 
-            /*for(Station s : list.stopPoints){
-                List<Arrivals> arr = searchArrivals(s.getNaptanId());
-                s.setArrivals(arr);
-            }*/
+            for(Station s : list.stopPoints){
+               s.setType(type);
+            }
 
             return list;
 

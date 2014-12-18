@@ -19,10 +19,8 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
-import com.google.android.gms.maps.model.internal.f;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -31,8 +29,8 @@ import mycompany.thistest.AsyncClass.GeocodeTask;
 import mycompany.thistest.AsyncClass.LoadPlaces;
 import mycompany.thistest.AsyncClass.LoadPlacesTFL;
 import mycompany.thistest.Connectivity.GPSTracker;
-import mycompany.thistest.PlacesSearch.Place;
 import mycompany.thistest.PlacesSearch.PlacesList;
+import mycompany.thistest.TFLPlaces.StationsList;
 
 /**
  * Created by trsq9010 on 16/12/2014.
@@ -42,6 +40,10 @@ public class CustomizedMap {
     public static final float ZOOM_MIN = 14.5f;
     // Nearest places
     PlacesList nearPlaces;
+
+    // Nearest places
+    StationsList nearStations;
+
     // Map view
     GoogleMap map;
 
@@ -54,6 +56,8 @@ public class CustomizedMap {
 
     //to get the reference of a particular marker (used to display details about a place from map)
     HashMap<Marker, String> markerRef;
+
+    HashMap<Marker, Spot> markerPlaces;
 
     //radius of the perimeter where we look for places
     int radius;
@@ -82,6 +86,8 @@ public class CustomizedMap {
         utils = new Utils();
         map.setPadding(0, utils.dpToPx(50, activity.getBaseContext()), 0, 0);
         markerRef = new HashMap<Marker, String>();
+        markerPlaces = new HashMap<Marker, Spot>();
+
         pos = null;
         GPSTracker gps = new GPSTracker(activity);
         oldPos = new LatLng(gps.getLatitude(), gps.getLongitude());
@@ -136,8 +142,8 @@ public class CustomizedMap {
         map.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
             @Override
             public void onInfoWindowClick(Marker marker) {
-                String reference = markerRef.get(marker);
-
+                //String reference = markerRef.get(marker);
+                String reference = markerPlaces.get(marker).getId();
                 // Starting new intent
                 Intent in = new Intent(activity.getApplicationContext(),
                         SinglePlaceActivity.class);
@@ -173,14 +179,14 @@ public class CustomizedMap {
                 if (isConnected) {
                     //if camera is closed enough and has moved enough to update the map
                     if (cameraPosition.zoom >= ZOOM_MIN) {
-                        if ((utils.distFrom(oldPos, cameraPosition.target) > radius / 2 || markerRef.isEmpty()) && isMoving) {
+                        if ((utils.distFrom(oldPos, cameraPosition.target) > radius / 2 || markerPlaces.isEmpty()) && isMoving) {
                             updateMap();
                         }
                     } else {
                         //if zoom is too far, clean the map
                         map.clear();
                         circle = null;
-                        markerRef.clear();
+                        markerPlaces.clear();
                         activity.findViewById(R.id.button).setVisibility(View.INVISIBLE);
                     }
                 } else {
@@ -234,7 +240,17 @@ public class CustomizedMap {
     //save the nearest place in the customized map class
     public void setNearPlaces(PlacesList np){
         nearPlaces = np;
-        setMarkers();
+        //setMarkers();
+        ArrayList<Spot> spots = new ArrayList<Spot>(nearPlaces.results);
+        setMarkers(spots);
+    }
+
+    //method called by loadplaces when places have been found
+    //save the nearest place in the customized map class
+    public void setNearStations(StationsList sl){
+        nearStations = sl;
+        ArrayList<Spot> spots = new ArrayList<Spot>(nearStations.stopPoints);
+        setMarkers(spots);
     }
 
     //true if the user is moving map
@@ -306,7 +322,7 @@ public class CustomizedMap {
         double lat = map.getCameraPosition().target.latitude;
         double lon = map.getCameraPosition().target.longitude;
         for(String s : type)
-            new LoadPlacesTFL(s,lat, lon, radius).execute();
+            new LoadPlacesTFL(s,lat, lon, radius, activity).execute();
     }
 
 
@@ -314,19 +330,18 @@ public class CustomizedMap {
 
 
     //to add markers on map following places found
-    public void setMarkers(){
+   /* public void setMarkers(){
         max_pos = 0;
 
         //clean hash map with previous markets
         for(Marker m : markerRef.keySet())
             m.remove();
         markerRef.clear();
-
         //for each place, add a market with properties
         if(nearPlaces.results!= null) {
+
             for (Iterator<Place> iterator = nearPlaces.results.iterator(); iterator.hasNext(); ) {
                 Place place = iterator.next();
-
                 double latitude = place.geometry.location.lat; // latitude
                 double longitude = place.geometry.location.lng; // longitude
                 int distance = (int) utils.distFrom(map.getCameraPosition().target, new LatLng(latitude, longitude));
@@ -373,6 +388,72 @@ public class CustomizedMap {
         //update circle
         circle.setCenter(map.getCameraPosition().target);
         circle.setRadius(max_pos);
+    }
+*/
+
+    //to add markers on map following places found
+    public void setMarkers(List<Spot> list){
+        max_pos = 0;
+        //clean hash map with previous markets
+
+
+        //for each place, add a market with properties
+        if(list!= null && !list.isEmpty()) {
+            for (Iterator iterator = markerPlaces.entrySet().iterator(); iterator.hasNext(); ) {
+                HashMap.Entry<Marker, Spot> pairs = (HashMap.Entry<Marker, Spot>)iterator.next();
+
+                if(pairs.getValue().getClass().isInstance(list.get(0))) {
+                    pairs.getKey().remove();
+                    iterator.remove();
+                }
+            }
+
+            for (Iterator<Spot> iterator = list.iterator(); iterator.hasNext(); ) {
+
+                Spot s = iterator.next();
+
+                int distance = (int) utils.distFrom(map.getCameraPosition().target, new LatLng(s.getLatitude(), s.getLongitude()));
+
+                //add only places which are inside a circle around the user
+                if (distance <= radius) {
+                    max_pos = Math.max(max_pos, distance);
+
+                    //used to draw icon following type of the place
+                    String mDrawableName = s.getType();
+                    /*String[] str = utils.parseType(types);
+
+                    //to show only icon corresponding to types searched
+                    for (int i = 0; i < str.length; i++) {
+                        if (Arrays.asList(place.types).contains(str[i])) {
+                            mDrawableName = str[i];
+                            break;
+                        }
+                    }*/
+
+                    //get icon corresponding to the type of the place
+                    int resID = activity.getResources().getIdentifier(mDrawableName, "drawable", activity.getPackageName());
+                    Marker m;
+                    //if the icon has not been found just add a default marker
+                    if (resID == 0) {
+                        m = (map.addMarker(new MarkerOptions()
+                                .position(new LatLng(s.getLatitude(), s.getLongitude()))
+                                .title(s.getName())));
+                    } else {
+                        m = (map.addMarker(new MarkerOptions()
+                                .position(new LatLng(s.getLatitude(), s.getLongitude()))
+                                .title(s.getName())
+                                .icon(BitmapDescriptorFactory.fromResource(resID))));
+                    }
+
+                    markerPlaces.put(m, s);
+                } else {
+                    //if the place is too far, remove it from list
+                    list.remove(iterator);
+                }
+            }
+
+        }
+
     }
 
 

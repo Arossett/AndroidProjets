@@ -4,9 +4,9 @@ import com.google.api.client.util.Key;
 
 import java.util.List;
 
-import mycompany.thistest.AsyncClass.Spots;
+import mycompany.thistest.Spot;
 
-public class Station implements Spots{
+public class Station implements Spot {
    // @Key
    	//public String $type;
     //@Key
@@ -37,6 +37,8 @@ public class Station implements Spots{
     @Key
     double lon;
 
+    String type;
+
     List<Arrivals> arrivals;
 
     public void setArrivals(List<Arrivals> arr){
@@ -53,5 +55,28 @@ public class Station implements Spots{
     @Override
     public String getName() {
         return commonName;
+    }
+
+    public String getId(){
+        return naptanId;
+    }
+
+    @Override
+    public double getLongitude() {
+        return lon;
+    }
+
+    @Override
+    public double getLatitude() {
+        return lat;
+    }
+
+    @Override
+    public String getType() {
+        return type;
+    }
+
+    public void setType(String s){
+        type = s;
     }
 }

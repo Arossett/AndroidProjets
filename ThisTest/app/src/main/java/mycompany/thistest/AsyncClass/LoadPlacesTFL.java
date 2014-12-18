@@ -8,6 +8,7 @@ import android.view.View;
 import java.util.ArrayList;
 import java.util.List;
 
+import mycompany.thistest.PlacesMapActivity;
 import mycompany.thistest.TFLPlaces.Arrivals;
 import mycompany.thistest.TFLPlaces.Station;
 import mycompany.thistest.TFLPlaces.StationsList;
@@ -23,12 +24,14 @@ public class LoadPlacesTFL extends AsyncTask<String, String, StationsList>{
     double latitude;
     double longitude;
     int radius;
+    Activity activity;
 
-    public LoadPlacesTFL(String t, double lat, double lon, int r){
+    public LoadPlacesTFL(String t, double lat, double lon, int r, Activity a){
         type = t;
         latitude = lat;
         longitude = lon;
         radius = r;
+        activity =a;
     }
 
     @Override
@@ -63,6 +66,11 @@ public class LoadPlacesTFL extends AsyncTask<String, String, StationsList>{
         for(Station s: stationsList.stopPoints) {
             if(s.commonName!= null)
             Log.v("nawak", s.commonName);
+        }
+        //if you want to show nearPlaces on a map linked to the activity
+        if (activity instanceof PlacesMapActivity) {
+            //the activity should have a method to get a customizedMap
+            ((PlacesMapActivity) activity).getMap().setNearStations(stationsList);
         }
 
 
