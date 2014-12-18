@@ -4,7 +4,9 @@ import com.google.api.client.util.Key;
 
 import java.util.List;
 
-public class Station {
+import mycompany.thistest.AsyncClass.Spots;
+
+public class Station implements Spots{
    // @Key
    	//public String $type;
     //@Key
@@ -48,4 +50,8 @@ public class Station {
         return naptanId;
     }
 
+    @Override
+    public String getName() {
+        return commonName;
+    }
 }

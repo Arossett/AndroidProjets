@@ -19,6 +19,7 @@ import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
+import com.google.android.gms.maps.model.internal.f;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -159,61 +160,7 @@ public class CustomizedMap {
         });
     }
 
-    //to add markers on map following places found
-    public void setMarkers(){
-        max_pos = 0;
 
-        //clean hash map with previous markets
-        for(Marker m : markerRef.keySet())
-            m.remove();
-        markerRef.clear();
-
-        //for each place, add a market with properties
-        if(nearPlaces.results!= null) {
-            for (Iterator<Place> iterator = nearPlaces.results.iterator(); iterator.hasNext(); ) {
-                Place place = iterator.next();
-
-                double latitude = place.geometry.location.lat; // latitude
-                double longitude = place.geometry.location.lng; // longitude
-                int distance = (int) utils.distFrom(map.getCameraPosition().target, new LatLng(latitude, longitude));
-
-                if (distance <= radius) {
-                    max_pos = Math.max(max_pos, distance);
-
-                    //used when search other that by radar
-                    String mDrawableName = place.types[0];
-                    String[] str = utils.parseType(types);
-
-                    for (int i = 0; i < str.length; i++) {
-                        if (Arrays.asList(place.types).contains(str[i])) {
-                            mDrawableName = str[i];
-                            break;
-                        }
-                    }
-
-                    int resID = activity.getResources().getIdentifier(mDrawableName, "drawable", activity.getPackageName());
-                    Marker m;
-                    if (resID == 0) {
-                        m = (map.addMarker(new MarkerOptions()
-                                .position(new LatLng(latitude, longitude))
-                                .title(place.name)));
-                    } else {
-                        m = (map.addMarker(new MarkerOptions()
-                                .position(new LatLng(latitude, longitude))
-                                .title(place.name)
-                                .icon(BitmapDescriptorFactory.fromResource(resID))));
-                    }
-
-                    markerRef.put(m, place.reference);
-                } else {
-                    iterator.remove();
-                }
-            }
-        }
-        Log.v("distance", "distance max = " + max_pos);
-        circle.setCenter(map.getCameraPosition().target);
-        circle.setRadius(max_pos);
-    }
 
     //to initialize and set camera listener (to do in OnCreate)
     private void setCameraListener(){
@@ -237,6 +184,7 @@ public class CustomizedMap {
                         activity.findViewById(R.id.button).setVisibility(View.INVISIBLE);
                     }
                 } else {
+                    //if no connection, advert user
                     Toast.makeText(activity.getBaseContext(), R.string.connection_lost, Toast.LENGTH_SHORT).show();
                 }
             }
@@ -252,6 +200,7 @@ public class CustomizedMap {
 
         oldPos = cameraPosition.target;
 
+        //search near places around new location
         if(types!=null) {
             new LoadPlaces(activity, radius, types, cameraPosition.target).execute();
         }
@@ -259,10 +208,13 @@ public class CustomizedMap {
         if (pos != null) {
             pos.remove();
         }
+
+        //add marker on the new location
         pos = map.addMarker(new MarkerOptions().position(cameraPosition.target));
 
         isMoving = false;
 
+        //draw a circle surrounding all places found
         if (circle == null) {
             CircleOptions circleOptions = new CircleOptions()
                     .center(cameraPosition.target)
@@ -272,10 +224,14 @@ public class CustomizedMap {
             circle = map.addCircle(circleOptions);
             activity.findViewById(R.id.button).setVisibility(View.VISIBLE);
         }
+
+        //if transports should be found
         if(transports !=null)
-        setTransports(transports);
+            setTransports(transports);
     }
 
+    //method called by loadplaces when places have been found
+    //save the nearest place in the customized map class
     public void setNearPlaces(PlacesList np){
         nearPlaces = np;
         setMarkers();
@@ -306,14 +262,17 @@ public class CustomizedMap {
         oldPos = pos;
     }
 
+    //used to update connection state for each change
     public void setIsConnected(boolean b){
         isConnected = b;
     }
 
+    //return near places
     public PlacesList getNearPlaces(){
         return nearPlaces;
     }
 
+    //to add search button listener
     private void setButtonFind(){
         try {
             //to set research bar
@@ -341,12 +300,80 @@ public class CustomizedMap {
         }
     }
 
+    //to save transports mode chosen by user
     public void setTransports(String[] type){
         transports = type;
         double lat = map.getCameraPosition().target.latitude;
         double lon = map.getCameraPosition().target.longitude;
         for(String s : type)
-        new LoadPlacesTFL(s,lat, lon, radius).execute();
+            new LoadPlacesTFL(s,lat, lon, radius).execute();
     }
+
+
+
+
+
+    //to add markers on map following places found
+    public void setMarkers(){
+        max_pos = 0;
+
+        //clean hash map with previous markets
+        for(Marker m : markerRef.keySet())
+            m.remove();
+        markerRef.clear();
+
+        //for each place, add a market with properties
+        if(nearPlaces.results!= null) {
+            for (Iterator<Place> iterator = nearPlaces.results.iterator(); iterator.hasNext(); ) {
+                Place place = iterator.next();
+
+                double latitude = place.geometry.location.lat; // latitude
+                double longitude = place.geometry.location.lng; // longitude
+                int distance = (int) utils.distFrom(map.getCameraPosition().target, new LatLng(latitude, longitude));
+
+                //add only places which are inside a circle around the user
+                if (distance <= radius) {
+                    max_pos = Math.max(max_pos, distance);
+
+                    //used to draw icon following type of the place
+                    String mDrawableName = place.types[0];
+                    String[] str = utils.parseType(types);
+
+                    //to show only icon corresponding to types searched
+                    for (int i = 0; i < str.length; i++) {
+                        if (Arrays.asList(place.types).contains(str[i])) {
+                            mDrawableName = str[i];
+                            break;
+                        }
+                    }
+
+                    //get icon corresponding to the type of the place
+                    int resID = activity.getResources().getIdentifier(mDrawableName, "drawable", activity.getPackageName());
+                    Marker m;
+                    //if the icon has not been found just add a default marker
+                    if (resID == 0) {
+                        m = (map.addMarker(new MarkerOptions()
+                                .position(new LatLng(latitude, longitude))
+                                .title(place.name)));
+                    } else {
+                        m = (map.addMarker(new MarkerOptions()
+                                .position(new LatLng(latitude, longitude))
+                                .title(place.name)
+                                .icon(BitmapDescriptorFactory.fromResource(resID))));
+                    }
+
+                    markerRef.put(m, place.reference);
+                } else {
+                    //if the place is too far, remove it from list
+                    iterator.remove();
+                }
+            }
+        }
+        Log.v("distance", "distance max = " + max_pos);
+        //update circle
+        circle.setCenter(map.getCameraPosition().target);
+        circle.setRadius(max_pos);
+    }
+
 
 }

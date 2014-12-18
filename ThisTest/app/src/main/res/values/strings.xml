@@ -11,4 +11,6 @@
     <string name="google_services_not_available">Google Play Services are not available,
         please download or update it and relaunch application</string>
     <string name="not_location_access">Please enable location access</string>
+    <string name="title_activity_transport">TransportActivity</string>
+
 </resources>
