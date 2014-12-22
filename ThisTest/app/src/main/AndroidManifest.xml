@@ -33,7 +33,8 @@
         </activity>
         <activity
             android:name="mycompany.thistest.PlacesMapActivity"
-            android:label="@string/title_activity_places_map" >
+            android:label="@string/title_activity_places_map"
+            >
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 

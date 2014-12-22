@@ -19,4 +19,9 @@ public class PlacesList implements Serializable {
     @Key
     public List<Place> results;
 
+    public void setType(String types){
+        for(Place p : results)
+            p.setType(types);
+    }
+
 }

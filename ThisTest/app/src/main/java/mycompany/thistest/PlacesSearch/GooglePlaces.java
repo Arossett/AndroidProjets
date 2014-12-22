@@ -68,6 +68,7 @@ public class GooglePlaces {
             // Check log cat for places response status
             Log.d("Places Status", "" + list.status);
             Log.d("Places Status", "" + list.results.size());
+            list.setType(types);
             return list;
 
         } catch (Exception e) {

@@ -3,6 +3,7 @@ package mycompany.thistest;
 import android.app.Activity;
 import android.content.Intent;
 import android.content.IntentFilter;
+import android.content.res.Configuration;
 import android.os.Handler;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
@@ -44,11 +45,18 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
     ConnectivityChangeReceiver connectivityChangeReceiver;
 
     @Override
+    public void onConfigurationChanged(Configuration newConfig) {
+        super.onConfigurationChanged(newConfig);
+        setContentView(R.layout.activity_places_map);
+    }
+
+    @Override
     protected void onCreate(Bundle savedInstanceState) {
+        super.onCreate(savedInstanceState);
+
+        //check if google play services are available
         GoogleServicesConnectionDetector cd = new GoogleServicesConnectionDetector(getBaseContext());
         isService = cd.servicesConnected();
-
-        super.onCreate(savedInstanceState);
 
         if(isService) {
             setContentView(R.layout.activity_places_map);

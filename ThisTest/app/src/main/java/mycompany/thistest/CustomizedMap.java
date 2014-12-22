@@ -25,17 +25,20 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 
-import mycompany.thistest.AsyncClass.GeocodeTask;
-import mycompany.thistest.AsyncClass.LoadPlaces;
-import mycompany.thistest.AsyncClass.LoadPlacesTFL;
+import mycompany.thistest.Connectivity.GeocodeTask;
+import mycompany.thistest.Interfaces.Spot;
+import mycompany.thistest.PlacesSearch.LoadPlaces;
+import mycompany.thistest.TFLPlaces.LoadPlacesTFL;
 import mycompany.thistest.Connectivity.GPSTracker;
+import mycompany.thistest.PlacesSearch.Place;
 import mycompany.thistest.PlacesSearch.PlacesList;
+import mycompany.thistest.TFLPlaces.Station;
 import mycompany.thistest.TFLPlaces.StationsList;
 
 /**
  * Created by trsq9010 on 16/12/2014.
  */
-public class CustomizedMap {
+public class CustomizedMap  {
 
     public static final float ZOOM_MIN = 14.5f;
     // Nearest places
@@ -142,16 +145,27 @@ public class CustomizedMap {
         map.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
             @Override
             public void onInfoWindowClick(Marker marker) {
-                //String reference = markerRef.get(marker);
                 String reference = markerPlaces.get(marker).getId();
-                // Starting new intent
-                Intent in = new Intent(activity.getApplicationContext(),
-                        SinglePlaceActivity.class);
+                Intent in;
+                if(markerPlaces.get(marker).getClass().isInstance(new Place())) {
+                    // Starting new intent
+                    in = new Intent(activity.getApplicationContext(),
+                            SinglePlaceActivity.class);
 
-                // Sending place refrence id to single place activity stop pretending !!!
-                // place refrence id used to get "Place full details"
-                in.putExtra("reference", reference);
+                    // Sending place refrence id to single place activity stop pretending !!!
+                    // place refrence id used to get "Place full details"
+                    in.putExtra("reference", reference);
+                }else{
+                    in = new Intent(activity.getApplicationContext(), TransportActivity.class);
+                    in.putExtra("stationId", reference);
+                    ArrayList<String> otherIds = ((Station)markerPlaces.get(marker)).getRailId();
+                    in.putExtra("railIds", otherIds);
+
+                }
                 activity.startActivity(in);
+
+
+
             }
         });
 
@@ -249,6 +263,7 @@ public class CustomizedMap {
     //save the nearest place in the customized map class
     public void setNearStations(StationsList sl){
         nearStations = sl;
+
         ArrayList<Spot> spots = new ArrayList<Spot>(nearStations.stopPoints);
         setMarkers(spots);
     }
@@ -407,48 +422,40 @@ public class CustomizedMap {
                     iterator.remove();
                 }
             }
+            if(list.get(0).getId() != null) {
+                for (Iterator<Spot> iterator = list.iterator(); iterator.hasNext(); ) {
 
-            for (Iterator<Spot> iterator = list.iterator(); iterator.hasNext(); ) {
+                    Spot s = iterator.next();
 
-                Spot s = iterator.next();
+                    int distance = (int) utils.distFrom(map.getCameraPosition().target, new LatLng(s.getLatitude(), s.getLongitude()));
 
-                int distance = (int) utils.distFrom(map.getCameraPosition().target, new LatLng(s.getLatitude(), s.getLongitude()));
+                    //add only places which are inside a circle around the user
+                    if (distance <= radius) {
+                        max_pos = Math.max(max_pos, distance);
 
-                //add only places which are inside a circle around the user
-                if (distance <= radius) {
-                    max_pos = Math.max(max_pos, distance);
+                        //used to draw icon following type of the place
+                        String mDrawableName = s.getType();
 
-                    //used to draw icon following type of the place
-                    String mDrawableName = s.getType();
-                    /*String[] str = utils.parseType(types);
-
-                    //to show only icon corresponding to types searched
-                    for (int i = 0; i < str.length; i++) {
-                        if (Arrays.asList(place.types).contains(str[i])) {
-                            mDrawableName = str[i];
-                            break;
+                        //get icon corresponding to the type of the place
+                        int resID = activity.getResources().getIdentifier(mDrawableName, "drawable", activity.getPackageName());
+                        Marker m;
+                        //if the icon has not been found just add a default marker
+                        if (resID == 0) {
+                            m = (map.addMarker(new MarkerOptions()
+                                    .position(new LatLng(s.getLatitude(), s.getLongitude()))
+                                    .title(s.getName())));
+                        } else {
+                            m = (map.addMarker(new MarkerOptions()
+                                    .position(new LatLng(s.getLatitude(), s.getLongitude()))
+                                    .title(s.getName())
+                                    .icon(BitmapDescriptorFactory.fromResource(resID))));
                         }
-                    }*/
 
-                    //get icon corresponding to the type of the place
-                    int resID = activity.getResources().getIdentifier(mDrawableName, "drawable", activity.getPackageName());
-                    Marker m;
-                    //if the icon has not been found just add a default marker
-                    if (resID == 0) {
-                        m = (map.addMarker(new MarkerOptions()
-                                .position(new LatLng(s.getLatitude(), s.getLongitude()))
-                                .title(s.getName())));
+                        markerPlaces.put(m, s);
                     } else {
-                        m = (map.addMarker(new MarkerOptions()
-                                .position(new LatLng(s.getLatitude(), s.getLongitude()))
-                                .title(s.getName())
-                                .icon(BitmapDescriptorFactory.fromResource(resID))));
+                        //if the place is too far, remove it from list
+                        list.remove(iterator);
                     }
-
-                    markerPlaces.put(m, s);
-                } else {
-                    //if the place is too far, remove it from list
-                    list.remove(iterator);
                 }
             }
 

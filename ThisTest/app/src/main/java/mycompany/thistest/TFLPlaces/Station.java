@@ -1,29 +1,14 @@
 
 package mycompany.thistest.TFLPlaces;
+
 import com.google.api.client.util.Key;
 
+import java.util.ArrayList;
 import java.util.List;
 
-import mycompany.thistest.Spot;
+import mycompany.thistest.Interfaces.Spot;
 
 public class Station implements Spot {
-   // @Key
-   	//public String $type;
-    //@Key
-   	//public List matches;
-  /*  @Key
-   	public String stationId;
-
-   @Key
-    public String name;
-
-    public String getName(){
-        return name;
-    }
-
-    public String getId(){
-        return stationId;
-    }*/
 
     @Key
     String naptanId;
@@ -37,19 +22,18 @@ public class Station implements Spot {
     @Key
     double lon;
 
+    @Key
+    String stopType;
+
+    @Key
+    int icsCode;
+
     String type;
 
-    List<Arrivals> arrivals;
+    ArrayList<String> railIds;
 
-    public void setArrivals(List<Arrivals> arr){
-        arrivals = arr;
-    }
-    public List<Arrivals> getArrivals(){
-        return arrivals;
-    }
-
-    public String getNaptanId(){
-        return naptanId;
+    public Station(){
+        naptanId = null;
     }
 
     @Override
@@ -57,6 +41,7 @@ public class Station implements Spot {
         return commonName;
     }
 
+    @Override
     public String getId(){
         return naptanId;
     }
@@ -79,4 +64,29 @@ public class Station implements Spot {
     public void setType(String s){
         type = s;
     }
+
+    public String getStopType(){
+        return stopType;
+    }
+
+    public int getIcsCode(){
+        return icsCode;
+    }
+
+    //to merge stations (overground and tube) from the same place
+    public  void initRailsList(){
+        railIds = new ArrayList<String>();
+        railIds.clear();
+    }
+
+    public void addRailId(String id){
+        railIds.add(id);
+    }
+
+    public ArrayList<String> getRailId(){
+        return railIds;
+    }
+
+
+
 }

@@ -2,10 +2,12 @@ package mycompany.thistest.PlacesSearch;
 
 
 import java.io.Serializable;
+import java.util.Arrays;
 
 import com.google.api.client.util.Key;
 
-import mycompany.thistest.Spot;
+import mycompany.thistest.Interfaces.Spot;
+import mycompany.thistest.Utils;
 
 /** Implement this class from "Serializable"
  * So that you can pass this class Object to another using Intents
@@ -45,6 +47,11 @@ public class Place implements Serializable, Spot {
     @Key
     public String[] types;
 
+    public String type;
+
+    public Place(){
+        reference = null;
+    }
 
     @Override
     public String toString() {
@@ -73,7 +80,7 @@ public class Place implements Serializable, Spot {
 
     @Override
     public String getType() {
-        return "restaurant";
+        return type;
     }
 
     public static class Geometry implements Serializable
@@ -89,6 +96,19 @@ public class Place implements Serializable, Spot {
 
         @Key
         public double lng;
+    }
+
+    public void setType(String t){
+        type = types[0];
+        Utils utils = new Utils();
+        String[] tp = utils.parseType(t);
+        //to show only icon corresponding to types searched
+        for (int i = 0; i < types.length; i++) {
+            if (Arrays.asList(tp).contains(types[i])) {
+                type = types[i];
+                break;
+            }
+        }
     }
 
 }

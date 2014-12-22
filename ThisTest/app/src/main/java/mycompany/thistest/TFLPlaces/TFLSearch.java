@@ -8,16 +8,13 @@ import com.google.api.client.http.HttpRequestFactory;
 import com.google.api.client.http.HttpRequestInitializer;
 import com.google.api.client.http.HttpTransport;
 import com.google.api.client.http.javanet.NetHttpTransport;
-import com.google.api.client.http.json.JsonHttpParser;
 import com.google.api.client.json.JsonObjectParser;
 import com.google.api.client.json.jackson.JacksonFactory;
 import com.google.gson.Gson;
 import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
-import java.lang.reflect.Array;
 import java.lang.reflect.Type;
-import java.util.Collection;
 import java.util.List;
 
 /**
@@ -96,11 +93,7 @@ public class TFLSearch {
             }
 
             StationsList list = request.execute().parseAs(StationsList.class);
-
-            for(Station s : list.stopPoints){
-               s.setType(type);
-            }
-
+            list.updateList(type);
             return list;
 
         } catch (JsonSyntaxException e) {
@@ -112,7 +105,7 @@ public class TFLSearch {
     }
 
 
-    public List<Arrivals> searchArrivals(String id)
+    public List<Arrival> searchArrivals(String id)
             throws Exception {
 
         try {
@@ -125,8 +118,9 @@ public class TFLSearch {
             request.getUrl().put("ids", id);
             Gson gson = new Gson();
 
-            Type ListType = new TypeToken<List<Arrivals>>(){}.getType();
-            List<Arrivals> enums = gson.fromJson(request.execute().parseAsString(), ListType);
+            Type ListType = new TypeToken<List<Arrival>>(){}.getType();
+            List<Arrival> enums = gson.fromJson(request.execute().parseAsString(), ListType);
+
             return enums;
 
         } catch (Exception e) {
