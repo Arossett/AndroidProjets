@@ -1,4 +1,4 @@
-package mycompany.thistest;
+package mycompany.thistest.Interfaces;
 
 /**
  * Created by trsq9010 on 18/12/2014.

@@ -1,25 +1,28 @@
-package mycompany.thistest.AsyncClass;
+package mycompany.thistest.TFLPlaces;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.os.AsyncTask;
+import android.util.Log;
 
-import mycompany.thistest.PlacesSearch.GooglePlaces;
-import mycompany.thistest.PlacesSearch.PlaceDetails;
-import mycompany.thistest.SinglePlaceActivity;
+import java.util.List;
+
+import mycompany.thistest.TFLPlaces.Arrival;
+import mycompany.thistest.TFLPlaces.TFLSearch;
+import mycompany.thistest.TransportActivity;
 
 /**
- * Created by trsq9010 on 09/12/2014.
+ * Created by trsq9010 on 19/12/2014.
  */
-public class LoadPlaceDetails extends AsyncTask<String, String, String> {
+public class LoadArrivals extends AsyncTask<String, String, String> {
     // Progress dialog
     ProgressDialog pDialog;
     Activity activity;
-    GooglePlaces googlePlaces;
+    String stationId;
 
-    public LoadPlaceDetails(Activity a, GooglePlaces gp){
+    public LoadArrivals(Activity a, String id){
         activity = a;
-        googlePlaces = gp;
+        stationId = id;
     }
 
     /**
@@ -39,17 +42,12 @@ public class LoadPlaceDetails extends AsyncTask<String, String, String> {
      * getting Profile JSON
      * */
     protected String doInBackground(String... args) {
-        String reference = args[0];
-
-        // creating Places class object
-        googlePlaces = new GooglePlaces();
-
         // Check if used is connected to Internet
         try {
-            PlaceDetails placeDetails = googlePlaces.getPlaceDetails(reference);
-            if(activity instanceof SinglePlaceActivity)
-            {
-                ((SinglePlaceActivity)activity).setPlaceDetails(placeDetails);
+            List<Arrival> arrivals = new TFLSearch().searchArrivals(stationId);
+
+            if(activity instanceof TransportActivity){
+                ((TransportActivity)activity).setArrivals(arrivals);
             }
         } catch (Exception e) {
             e.printStackTrace();
@@ -66,15 +64,10 @@ public class LoadPlaceDetails extends AsyncTask<String, String, String> {
         // updating UI from Background Thread
         activity.runOnUiThread(new Runnable() {
             public void run() {
-                if(activity instanceof SinglePlaceActivity) {
-                    ((SinglePlaceActivity) activity).showDetails();
-
+                if(activity instanceof TransportActivity) {
+                    //add fragments displaying all lines arrivals information
+                    ((TransportActivity) activity).addNewLineFragment();
                 }
-                /**
-                 * Updating parsed Places into LISTVIEW
-                 * */
-
-
             }
         });
 

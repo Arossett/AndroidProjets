@@ -1,10 +1,7 @@
 package mycompany.thistest;
 
 import android.app.Activity;
-import android.app.FragmentManager;
-import android.app.FragmentTransaction;
 import android.os.Bundle;
-
 
 import android.content.Intent;
 import android.text.Html;
@@ -13,7 +10,7 @@ import android.view.View;
 import android.widget.RatingBar;
 import android.widget.TextView;
 
-import mycompany.thistest.AsyncClass.LoadPlaceDetails;
+import mycompany.thistest.PlacesSearch.LoadPlaceDetails;
 import mycompany.thistest.Connectivity.GoogleServicesConnectionDetector;
 import mycompany.thistest.Dialogs.AlertDialogManager;
 import mycompany.thistest.PlacesSearch.GooglePlaces;

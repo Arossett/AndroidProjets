@@ -12,12 +12,13 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
+import mycompany.thistest.Fragments.NextArrivalsListFragment;
 import mycompany.thistest.TFLPlaces.LoadArrivals;
 import mycompany.thistest.TFLPlaces.Arrival;
-import mycompany.thistest.UI.LineDetails;
+import mycompany.thistest.Fragments.LineDetails;
 
 
-public class TransportActivity extends Activity {
+public class TransportActivity extends Activity implements NextArrivalsListFragment.OnFragmentInteractionListener {
     String stationId;
     List<Arrival> arrivals;
 
@@ -27,10 +28,14 @@ public class TransportActivity extends Activity {
         stationId = (String) i.getSerializableExtra("stationId");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_transport);
-
+        FragmentTransaction transaction = getFragmentManager().beginTransaction();
+        transaction.add(R.id.container, new NextArrivalsListFragment())
+                .commit();
         //load transport next arrivals to the current station
         new LoadArrivals(this, stationId).execute();
 
+        //if there is different ids linked to this station (for overground case for example)
+        //load arrivals for these other station ids
         if((ArrayList<String>)i.getSerializableExtra("railIds")!=null) {
             ArrayList<String> railIds = (ArrayList<String>) i.getSerializableExtra("railIds");
             for(String s :railIds){
@@ -57,7 +62,9 @@ public class TransportActivity extends Activity {
 
         transaction.add(R.id.container, lf);
 */
-        //can be improve by looking for arrivals by line for a stopPoint
+
+        //can be improved by looking for arrivals by line for a stopPoint
+        //sort arrivals by line
         HashMap<String, ArrayList<Arrival>> arrivalsByLine = new HashMap<String, ArrayList<Arrival>>();
         for(Arrival a: arrivals){
             Log.v("arrivalsdetails", "name "+  a.getLineName() + " destination " + a.getDestinationName() + " plateforme "+a.getPlatform());
@@ -69,14 +76,17 @@ public class TransportActivity extends Activity {
                 arrivalsByLine.put(a.getLineName(), list);
             }
         }
+
         //TODO: fragment problem
+        FragmentTransaction transaction = getFragmentManager().beginTransaction();
+        //for each line, display a new fragment with arrivals sorted by platform
         for(HashMap.Entry<String, ArrayList<Arrival>> entry : arrivalsByLine.entrySet() ){
             LineDetails newFragment = LineDetails.newInstance(entry.getKey(), entry.getValue());
-            FragmentTransaction transaction = getFragmentManager().beginTransaction();
             transaction.add(R.id.container, newFragment);
-            transaction.commit();
             Log.v("newfragment",entry.getKey());
         }
+        transaction.commit();
+
     }
 
     @Override
@@ -99,5 +109,10 @@ public class TransportActivity extends Activity {
         }
 
         return super.onOptionsItemSelected(item);
+    }
+
+    @Override
+    public void onFragmentInteraction(String id) {
+
     }
 }

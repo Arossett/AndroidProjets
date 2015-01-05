@@ -1,4 +1,4 @@
-package mycompany.thistest.AsyncClass;
+package mycompany.thistest.Connectivity;
 
 import android.app.Activity;
 import android.content.Context;
