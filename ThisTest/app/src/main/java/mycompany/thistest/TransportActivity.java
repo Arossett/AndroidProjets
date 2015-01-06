@@ -12,13 +12,15 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 
-import mycompany.thistest.Fragments.NextArrivalsListFragment;
+import mycompany.thistest.Fragments.NextArrivalsItem;
+import mycompany.thistest.Fragments.ListFragment;
+import mycompany.thistest.Fragments.NextArrivalsListAdapter;
 import mycompany.thistest.TFLPlaces.LoadArrivals;
 import mycompany.thistest.TFLPlaces.Arrival;
 import mycompany.thistest.Fragments.LineDetails;
 
 
-public class TransportActivity extends Activity implements NextArrivalsListFragment.OnFragmentInteractionListener {
+public class TransportActivity extends Activity implements ListFragment.OnFragmentInteractionListener {
     String stationId;
     List<Arrival> arrivals;
 
@@ -28,9 +30,9 @@ public class TransportActivity extends Activity implements NextArrivalsListFragm
         stationId = (String) i.getSerializableExtra("stationId");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_transport);
-        FragmentTransaction transaction = getFragmentManager().beginTransaction();
-        transaction.add(R.id.container, new NextArrivalsListFragment())
-                .commit();
+
+
+
         //load transport next arrivals to the current station
         new LoadArrivals(this, stationId).execute();
 
@@ -77,14 +79,21 @@ public class TransportActivity extends Activity implements NextArrivalsListFragm
             }
         }
 
+
         //TODO: fragment problem
         FragmentTransaction transaction = getFragmentManager().beginTransaction();
+        ListFragment nextArrivalsListFragment = new ListFragment();
+        ArrayList<NextArrivalsItem> nextArrivalsItemList = new ArrayList<NextArrivalsItem>();
         //for each line, display a new fragment with arrivals sorted by platform
         for(HashMap.Entry<String, ArrayList<Arrival>> entry : arrivalsByLine.entrySet() ){
+            /*
             LineDetails newFragment = LineDetails.newInstance(entry.getKey(), entry.getValue());
             transaction.add(R.id.container, newFragment);
-            Log.v("newfragment",entry.getKey());
+            Log.v("newfragment",entry.getKey());*/
+            nextArrivalsItemList.add(new NextArrivalsItem(entry.getKey(), entry.getValue()));
         }
+        nextArrivalsListFragment.setmAdapter(new NextArrivalsListAdapter(this, nextArrivalsItemList));
+        transaction.add(R.id.container, nextArrivalsListFragment);
         transaction.commit();
 
     }

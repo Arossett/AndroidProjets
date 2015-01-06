@@ -11,6 +11,7 @@ import android.widget.TextView;
 import java.util.List;
 
 import mycompany.thistest.R;
+import mycompany.thistest.TFLPlaces.Arrival;
 
 public class NextArrivalsListAdapter extends ArrayAdapter {
 
@@ -27,7 +28,7 @@ public class NextArrivalsListAdapter extends ArrayAdapter {
          */
         private class ViewHolder{
             TextView titleText;
-            LinearLayout listView;
+            LinearLayout linearLayout;
         }
 
         /**
@@ -51,12 +52,16 @@ public class NextArrivalsListAdapter extends ArrayAdapter {
                 viewToUse = mInflater.inflate(R.layout.next_arrivals_layout, null);
                 holder = new ViewHolder();
                 holder.titleText = (TextView)viewToUse.findViewById(R.id.titleTextView);
-                holder.listView = (LinearLayout)viewToUse.findViewById(R.id.linLayout);
-                for(String s: item.getList()) {
+                holder.linearLayout = (LinearLayout)viewToUse.findViewById(R.id.linLayout);
+
+               //to display arrivals on screen 
+               for(Arrival a: item.getArrivals()) {
                     TextView tv = new TextView(getContext());
-                    tv.setText(s);
-                    holder.listView.addView(tv);
+                    tv.setText(a.toString());
+                    holder.linearLayout.addView(tv);
                 }
+
+
                 viewToUse.setTag(holder);
             } else {
                 viewToUse = convertView;
@@ -64,10 +69,6 @@ public class NextArrivalsListAdapter extends ArrayAdapter {
             }
 
             holder.titleText.setText(item.getItemTitle());
-            ArrayAdapter<String> myAdapter=new ArrayAdapter<String>(context,
-                    android.R.layout.simple_list_item_1,
-                    item.getList());
-            // holder.listView.setAdapter(myAdapter);
 
             return viewToUse;
         }

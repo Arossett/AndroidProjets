@@ -8,11 +8,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
 import android.widget.ListAdapter;
 import android.widget.TextView;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import mycompany.thistest.R;
@@ -27,7 +25,7 @@ import mycompany.thistest.R;
  * Activities containing this fragment MUST implement the {@link OnFragmentInteractionListener}
  * interface.
  */
-public class NextArrivalsListFragment extends Fragment implements AbsListView.OnItemClickListener {
+public class ListFragment extends Fragment implements AbsListView.OnItemClickListener {
 
     // TODO: Rename parameter arguments, choose names that match
     // the fragment initialization parameters, e.g. ARG_ITEM_NUMBER
@@ -52,8 +50,8 @@ public class NextArrivalsListFragment extends Fragment implements AbsListView.On
     private ListAdapter mAdapter;
 
     // TODO: Rename and change types of parameters
-    public static NextArrivalsListFragment newInstance(String param1, String param2) {
-        NextArrivalsListFragment fragment = new NextArrivalsListFragment();
+    public static ListFragment newInstance(String param1, String param2) {
+        ListFragment fragment = new ListFragment();
         Bundle args = new Bundle();
         args.putString(ARG_PARAM1, param1);
         args.putString(ARG_PARAM2, param2);
@@ -65,7 +63,7 @@ public class NextArrivalsListFragment extends Fragment implements AbsListView.On
      * Mandatory empty constructor for the fragment manager to instantiate the
      * fragment (e.g. upon screen orientation changes).
      */
-    public NextArrivalsListFragment() {
+    public ListFragment() {
     }
     private List<NextArrivalsItem> nextArrivalsItemList;
 
@@ -79,13 +77,17 @@ public class NextArrivalsListFragment extends Fragment implements AbsListView.On
         }
 
         // TODO: Change Adapter to display your content
-        nextArrivalsItemList = new ArrayList<NextArrivalsItem>();
-        String[]  l = {"one", "two", "three"};
+       /* nextArrivalsItemList = new ArrayList<NextArrivalsItem>();
+        mAdapter = new NextArrivalsListAdapter(getActivity(), nextArrivalsItemList);*/
+    }
 
-        nextArrivalsItemList.add(new NextArrivalsItem("Example 1", l));
-        nextArrivalsItemList.add(new NextArrivalsItem("Example 2", l));
-        nextArrivalsItemList.add(new NextArrivalsItem("Example 3", l));
+    /*public void addLineArrivals(String line, ArrayList<Arrival> arrivals){
+        nextArrivalsItemList.add(new NextArrivalsItem(line, arrivals));
         mAdapter = new NextArrivalsListAdapter(getActivity(), nextArrivalsItemList);
+    }*/
+
+    public void setmAdapter(ListAdapter adapter){
+        mAdapter = adapter;
     }
 
     @Override

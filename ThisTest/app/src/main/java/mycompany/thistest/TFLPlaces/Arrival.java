@@ -48,16 +48,13 @@ public class Arrival implements Serializable {
         return platNb;
     }
 
-    public String getDestination(){
-        return platformName;
-    }
-
     //display destination of trains
     public String toString(){
         String s = "";
         if(destinationName!=null)
             s =  destinationName + " expected in " + timeToStation/60;
-
+        else
+            s= getPlatform() + " expected in " + timeToStation/60;
         return s;
     }
 
