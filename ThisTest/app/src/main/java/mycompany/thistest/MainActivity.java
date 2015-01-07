@@ -8,6 +8,7 @@ import android.os.Handler;
 import android.net.ConnectivityManager;
 import android.os.Bundle;
 import android.os.Message;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
@@ -29,9 +30,11 @@ import mycompany.thistest.Connectivity.ConnectivityChangeReceiver;
 import mycompany.thistest.Dialogs.TypesChoice;
 
 
-public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDialogListener {
+public class MainActivity extends Activity implements TypesChoice.NoticeDialogListener {
 
     public static final float ZOOM_MIN = 14.5f;
+
+    TypesChoice myDiag;
 
     CustomizedMap map;
 
@@ -44,6 +47,9 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
     //to check change of connection
     ConnectivityChangeReceiver connectivityChangeReceiver;
 
+    boolean isDialog;
+
+    //used to get former position on the map and information displayed when screen is rotated
     @Override
     public void onConfigurationChanged(Configuration newConfig) {
         super.onConfigurationChanged(newConfig);
@@ -61,9 +67,11 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
         if(isService) {
             setContentView(R.layout.activity_places_map);
 
+            //create a customized map used from map fragment
             GoogleMap m = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
             map = new CustomizedMap(m, this);
 
+            //initialize the connectionChange receiver
             connectivityChangeReceiver =  new ConnectivityChangeReceiver(new Handler() {
                 public void handleMessage(Message msg) {
                     super.handleMessage(msg);
@@ -75,27 +83,35 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
                     new IntentFilter(
                             ConnectivityManager.CONNECTIVITY_ACTION));
 
+
             //used to restore view when app rotated
             if (savedInstanceState != null) {
                 types = savedInstanceState.getString("types");
                 map.setTypes(types);
                 map.setOldPos(new LatLng
                         (savedInstanceState.getDouble("latitude"), savedInstanceState.getDouble("longitude")));
+                isDialog = savedInstanceState.getBoolean("isDialogDisplayed");
+                Log.v("nawak", "dialog displayed? " + isDialog);
             } else {
                 types = null;
+                isDialog = false;
             }
+
 
             setButtonsListener();
 
             //to display choices window
-            if (types == null) {
-                TypesChoice myDiag = new TypesChoice();
+            if (!isDialog) {
+                myDiag = new TypesChoice();
                 Bundle diagBundle = new Bundle();
                 diagBundle.putStringArray("types",getResources().getStringArray(R.array.place_types));
-                diagBundle.putInt("search_id", R.id.action_settings);
+                diagBundle.putInt("search_id", R.id.place_settings);
+                diagBundle.putBoolean("isMultipleChoice", true);
+                diagBundle.putBoolean("closable", false);
                 myDiag.setArguments(diagBundle);
-                myDiag.setCancelable(false);
                 myDiag.show(getFragmentManager(), "Diag");
+
+                isDialog = true;
             }
         }
         //if Google Services are not available, display a message
@@ -144,8 +160,10 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         outState.putString("types", types);
-        outState.putDouble("latitude",map.getCameraPosition().target.latitude);
+        outState.putDouble("latitude", map.getCameraPosition().target.latitude);
         outState.putDouble("longitude",map.getCameraPosition().target.longitude);
+
+        outState.putBoolean("isDialogDisplayed", isDialog);
         super.onSaveInstanceState(outState);
     }
 
@@ -163,23 +181,23 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
 
-        //add choices windows to the menu
-        if (id == R.id.action_settings) {
-            TypesChoice myDiag=new TypesChoice();
+        //add place choices windows to the menu
+        if (id == R.id.place_settings) {
+            myDiag=new TypesChoice();
             Bundle diagBundle = new Bundle();
             diagBundle.putStringArray("types",getResources().getStringArray(R.array.place_types));
-            diagBundle.putInt("search_id", R.id.action_settings);
+            diagBundle.putInt("search_id", R.id.place_settings);
+            diagBundle.putBoolean("isMultipleChoice", true);
             myDiag.setArguments(diagBundle);
             myDiag.show(getFragmentManager(), "Diag");
             return true;
         }
 
-        //add choices windows to the menu
+        //add transport choices windows to the menu
         if (id == R.id.transport_settings) {
-            TypesChoice myDiag=new TypesChoice();
+            myDiag=new TypesChoice();
             Bundle diagBundle = new Bundle();
             diagBundle.putStringArray("types",getResources().getStringArray(R.array.transport_types));
-
             diagBundle.putInt("search_id", R.id.transport_settings);
             myDiag.setArguments(diagBundle);
             myDiag.show(getFragmentManager(), "Diag");
@@ -191,14 +209,18 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
         return super.onOptionsItemSelected(item);
     }
 
+    //implement method when positive button on choices dialog has been clicked
     @Override
     public boolean onDialogPositiveClick(TypesChoice dialog) {
 
+        //get list of items selected
         ArrayList<String> list = dialog.getmSelectedItems();
+        //check what kind of choices have been made
         int id = dialog.getTypeId();
 
+        //switch between the different kind of choices that can be made with a TypesChoice Dialog
         switch (id){
-            case R.id.action_settings: {
+            case R.id.place_settings: {
                 types = "";
                 for (String s : list) {
                     types = types + "|" + s;
@@ -207,7 +229,6 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
                 break;
             }
             case R.id.transport_settings: {
-
                 String[] myArray = list.toArray(new String[list.size()]);
                 map.setTransports(myArray);
                 break;
@@ -230,5 +251,6 @@ public class PlacesMapActivity extends Activity implements TypesChoice.NoticeDia
             unregisterReceiver(connectivityChangeReceiver);
         super.onDestroy();
     }
+
 
 }

@@ -54,7 +54,7 @@ public class NextArrivalsListAdapter extends ArrayAdapter {
                 holder.titleText = (TextView)viewToUse.findViewById(R.id.titleTextView);
                 holder.linearLayout = (LinearLayout)viewToUse.findViewById(R.id.linLayout);
 
-               //to display arrivals on screen 
+               //to display arrivals on screen
                for(Arrival a: item.getArrivals()) {
                     TextView tv = new TextView(getContext());
                     tv.setText(a.toString());

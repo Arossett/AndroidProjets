@@ -4,14 +4,10 @@ import android.app.Activity;
 import android.app.ProgressDialog;
 import android.os.AsyncTask;
 import android.text.Html;
-import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
 
-import mycompany.thistest.PlacesMapActivity;
-import mycompany.thistest.PlacesSearch.GooglePlaces;
-import mycompany.thistest.PlacesSearch.Place;
-import mycompany.thistest.PlacesSearch.PlacesList;
+import mycompany.thistest.MainActivity;
 
 /**
  * Created by trsq9010 on 08/12/2014.
@@ -73,9 +69,9 @@ public class LoadPlaces extends AsyncTask<String, String, String> {
                 if (nearPlaces != null) {
 
                     //if you want to show nearPlaces on a map linked to the activity
-                    if (activity instanceof PlacesMapActivity) {
+                    if (activity instanceof MainActivity) {
                         //the activity should have a method to get a customizedMap
-                         ((PlacesMapActivity) activity).getMap().setNearPlaces(nearPlaces);
+                         ((MainActivity) activity).getMap().setNearPlaces(nearPlaces);
                     }
                 }
 

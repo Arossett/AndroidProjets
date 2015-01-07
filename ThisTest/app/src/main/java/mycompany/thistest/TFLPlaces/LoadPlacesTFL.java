@@ -4,10 +4,7 @@ import android.app.Activity;
 import android.os.AsyncTask;
 import android.util.Log;
 
-import mycompany.thistest.PlacesMapActivity;
-import mycompany.thistest.TFLPlaces.Station;
-import mycompany.thistest.TFLPlaces.StationsList;
-import mycompany.thistest.TFLPlaces.TFLSearch;
+import mycompany.thistest.MainActivity;
 
 /**
  * Created by trsq9010 on 08/12/2014.
@@ -57,19 +54,22 @@ public class LoadPlacesTFL extends AsyncTask<String, String, StationsList>{
 
 
     protected void onPostExecute(StationsList stationsList) {
-
-        for(Station s: stationsList.stopPoints) {
-            if(s.commonName!= null)
-            Log.v("nawak", s.commonName);
+        //if search has return null or empty list
+        //create an empty stations list to override previous search
+       if (stationsList== null||stationsList.stopPoints.isEmpty()) {
+           stationsList = new StationsList();
+           stationsList.stopPoints.add(new Station());
+       }
+       else {
+            for (Station s : stationsList.stopPoints) {
+                if (s.commonName != null)
+                    Log.v("nawak", s.commonName);
+            }
         }
         //if you want to show nearPlaces on a map linked to the activity
-        if (activity instanceof PlacesMapActivity) {
+        if (activity instanceof MainActivity) {
             //the activity should have a method to get a customizedMap
-            if(stationsList.stopPoints.isEmpty())
-                stationsList.stopPoints.add(new Station());
-            ((PlacesMapActivity) activity).getMap().setNearStations(stationsList);
+            ((MainActivity) activity).getMap().setNearStations(stationsList);
         }
-
-
     }
 }

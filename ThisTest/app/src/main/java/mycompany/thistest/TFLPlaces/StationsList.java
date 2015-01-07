@@ -4,6 +4,7 @@ import android.util.Log;
 
 import com.google.api.client.util.Key;
 
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
@@ -14,6 +15,10 @@ public class StationsList {
 
     @Key
     public List<Station> stopPoints;
+
+    public StationsList(){
+        stopPoints = new ArrayList<Station>();
+    }
 
     //to check if list has already a reference for a metro station
     //used to merge overground, dlr and tube
@@ -43,4 +48,5 @@ public class StationsList {
             }
         }
     }
+
 }

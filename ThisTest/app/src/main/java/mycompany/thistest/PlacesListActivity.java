@@ -24,7 +24,7 @@ import android.widget.TextView;
 import mycompany.thistest.Dialogs.AlertDialogManager;
 import mycompany.thistest.PlacesSearch.Place;
 import mycompany.thistest.PlacesSearch.PlacesList;
-import mycompany.thistest.UI.SeparatedAdapter;
+import mycompany.thistest.Utilities.SeparatedAdapter;
 
 
 public class PlacesListActivity extends FragmentActivity /*implements LocListener*/ {

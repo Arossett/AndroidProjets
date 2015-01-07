@@ -34,6 +34,7 @@ import mycompany.thistest.PlacesSearch.Place;
 import mycompany.thistest.PlacesSearch.PlacesList;
 import mycompany.thistest.TFLPlaces.Station;
 import mycompany.thistest.TFLPlaces.StationsList;
+import mycompany.thistest.Utilities.Utils;
 
 /**
  * Created by trsq9010 on 16/12/2014.
@@ -82,7 +83,7 @@ public class CustomizedMap  {
 
     boolean isConnected;
 
-    public CustomizedMap(GoogleMap m, PlacesMapActivity mapActivity){
+    public CustomizedMap(GoogleMap m, MainActivity mapActivity){
         activity = mapActivity;
         map = m;
         map.setMyLocationEnabled(true);

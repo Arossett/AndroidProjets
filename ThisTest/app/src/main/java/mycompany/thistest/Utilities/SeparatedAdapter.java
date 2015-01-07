@@ -1,4 +1,4 @@
-package mycompany.thistest.UI;
+package mycompany.thistest.Utilities;
 
 import android.content.Context;
 import android.view.View;

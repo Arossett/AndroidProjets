@@ -86,11 +86,11 @@ public class TFLSearch {
             else if(type.equals("Bus")){
                 request.getUrl().put("stopTypes", "NaptanPublicBusCoachTram");
                 request.getUrl().put("modes", "bus");
-            }
+            }/*
             else{
                 request.getUrl().put("stopTypes", "NaptanPublicBusCoachTram");
                 request.getUrl().put("modes", "bus");
-            }
+            }*/
 
             StationsList list = request.execute().parseAs(StationsList.class);
             list.updateList(type);

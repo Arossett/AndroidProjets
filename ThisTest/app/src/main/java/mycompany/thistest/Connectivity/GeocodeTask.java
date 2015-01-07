@@ -1,7 +1,6 @@
 package mycompany.thistest.Connectivity;
 
 import android.app.Activity;
-import android.content.Context;
 import android.location.Address;
 import android.location.Geocoder;
 import android.os.AsyncTask;
@@ -14,8 +13,6 @@ import com.google.android.gms.maps.model.LatLng;
 
 import java.io.IOException;
 import java.util.List;
-
-import mycompany.thistest.PlacesMapActivity;
 
 
 public class GeocodeTask extends AsyncTask<String, Void, List<Address>> {
@@ -69,8 +66,8 @@ public class GeocodeTask extends AsyncTask<String, Void, List<Address>> {
            posFound = new LatLng(address.getLatitude(), address.getLongitude());
             map.animateCamera(CameraUpdateFactory.newLatLng(posFound));/*
            //get map linked to the activity to make camera move
-           if(activity instanceof PlacesMapActivity) {
-               PlacesMapActivity pl = (PlacesMapActivity) activity;
+           if(activity instanceof MainActivity) {
+               MainActivity pl = (MainActivity) activity;
                pl.getMap().animateCamera(CameraUpdateFactory.newLatLng(posFound));
            }*/
 
