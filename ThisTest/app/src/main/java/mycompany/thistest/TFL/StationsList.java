@@ -1,6 +1,4 @@
-package mycompany.thistest.TFLPlaces;
-
-import android.util.Log;
+package mycompany.thistest.TFL;
 
 import com.google.api.client.util.Key;
 

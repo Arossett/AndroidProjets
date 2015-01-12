@@ -11,7 +11,7 @@ import android.widget.TextView;
 import java.util.List;
 
 import mycompany.thistest.R;
-import mycompany.thistest.TFLPlaces.Arrival;
+import mycompany.thistest.TFL.Arrival;
 
 public class NextArrivalsListAdapter extends ArrayAdapter {
 

@@ -1,10 +1,9 @@
 
-package mycompany.thistest.TFLPlaces;
+package mycompany.thistest.TFL;
 
 import com.google.api.client.util.Key;
 
 import java.util.ArrayList;
-import java.util.List;
 
 import mycompany.thistest.Interfaces.Spot;
 

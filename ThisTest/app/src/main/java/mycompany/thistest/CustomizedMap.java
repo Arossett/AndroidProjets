@@ -28,12 +28,12 @@ import java.util.List;
 import mycompany.thistest.Connectivity.GeocodeTask;
 import mycompany.thistest.Interfaces.Spot;
 import mycompany.thistest.PlacesSearch.LoadPlaces;
-import mycompany.thistest.TFLPlaces.LoadPlacesTFL;
+import mycompany.thistest.TFL.LoadPlacesTFL;
 import mycompany.thistest.Connectivity.GPSTracker;
 import mycompany.thistest.PlacesSearch.Place;
 import mycompany.thistest.PlacesSearch.PlacesList;
-import mycompany.thistest.TFLPlaces.Station;
-import mycompany.thistest.TFLPlaces.StationsList;
+import mycompany.thistest.TFL.Station;
+import mycompany.thistest.TFL.StationsList;
 import mycompany.thistest.Utilities.Utils;
 
 /**

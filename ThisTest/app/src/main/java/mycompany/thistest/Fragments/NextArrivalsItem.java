@@ -1,17 +1,9 @@
 package mycompany.thistest.Fragments;
 
-import android.util.Log;
-import android.view.View;
-import android.widget.LinearLayout;
-import android.widget.ListView;
-import android.widget.TextView;
-
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 
-import mycompany.thistest.R;
-import mycompany.thistest.TFLPlaces.Arrival;
+import mycompany.thistest.TFL.Arrival;
 
 /**
  * Created by trsq9010 on 05/01/2015.

@@ -1,14 +1,11 @@
-package mycompany.thistest.TFLPlaces;
+package mycompany.thistest.TFL;
 
 import android.app.Activity;
 import android.app.ProgressDialog;
 import android.os.AsyncTask;
-import android.util.Log;
 
 import java.util.List;
 
-import mycompany.thistest.TFLPlaces.Arrival;
-import mycompany.thistest.TFLPlaces.TFLSearch;
 import mycompany.thistest.TransportActivity;
 
 /**

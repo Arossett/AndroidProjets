@@ -15,9 +15,8 @@ import java.util.List;
 import mycompany.thistest.Fragments.NextArrivalsItem;
 import mycompany.thistest.Fragments.ListFragment;
 import mycompany.thistest.Fragments.NextArrivalsListAdapter;
-import mycompany.thistest.TFLPlaces.LoadArrivals;
-import mycompany.thistest.TFLPlaces.Arrival;
-import mycompany.thistest.Fragments.LineDetails;
+import mycompany.thistest.TFL.LoadArrivals;
+import mycompany.thistest.TFL.Arrival;
 
 
 public class TransportActivity extends Activity implements ListFragment.OnFragmentInteractionListener {
@@ -30,9 +29,6 @@ public class TransportActivity extends Activity implements ListFragment.OnFragme
         stationId = (String) i.getSerializableExtra("stationId");
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_transport);
-
-
-
         //load transport next arrivals to the current station
         new LoadArrivals(this, stationId).execute();
 
@@ -53,18 +49,6 @@ public class TransportActivity extends Activity implements ListFragment.OnFragme
 
     public void addNewLineFragment(){
 
-        /*ListFragment lf = new ListFragment();
-        String[] values = new String[] { "Android", "iPhone", "WindowsMobile",
-                "Blackberry", "WebOS", "Ubuntu", "Windows7", "Max OS X",
-                "Linux", "OS/2" };
-        ArrayAdapter<String> adapter = new ArrayAdapter<String>(this,
-                android.R.layout.simple_list_item_1, values);
-        lf.setListAdapter(adapter);
-        FragmentTransaction transaction = getFragmentManager().beginTransaction();
-
-        transaction.add(R.id.container, lf);
-*/
-
         //can be improved by looking for arrivals by line for a stopPoint
         //sort arrivals by line
         HashMap<String, ArrayList<Arrival>> arrivalsByLine = new HashMap<String, ArrayList<Arrival>>();
@@ -84,6 +68,7 @@ public class TransportActivity extends Activity implements ListFragment.OnFragme
         FragmentTransaction transaction = getFragmentManager().beginTransaction();
         ListFragment nextArrivalsListFragment = new ListFragment();
         ArrayList<NextArrivalsItem> nextArrivalsItemList = new ArrayList<NextArrivalsItem>();
+
         //for each line, display a new fragment with arrivals sorted by platform
         for(HashMap.Entry<String, ArrayList<Arrival>> entry : arrivalsByLine.entrySet() ){
             /*

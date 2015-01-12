@@ -15,7 +15,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 import mycompany.thistest.R;
-import mycompany.thistest.TFLPlaces.Arrival;
+import mycompany.thistest.TFL.Arrival;
 
 
 /**

@@ -1,4 +1,4 @@
-package mycompany.thistest.TFLPlaces;
+package mycompany.thistest.TFL;
 
 import android.app.Activity;
 import android.os.AsyncTask;
