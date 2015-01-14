@@ -62,26 +62,7 @@ public class LoadPlacesTFL extends AsyncTask<String, String, List<Spot>>{
         //create an empty stations list to override previous search
        if (stationsList==null||stationsList.isEmpty()) {
            stationsList = new ArrayList<Spot>();
-           //use to erase previous search
-           //stationsList.add();
        }
-       else {
-            for (Spot s : stationsList) {
-                if (s.getName() != null)
-                    Log.v("nawak", s.getName());
-                if(s.getType().equals("Bike")){
-                    if(((BikePoint)s).additionalProperties!=null){
-                    Log.v("bikepoint", "properties : "+((BikePoint)s).additionalProperties.size());
-
-                    Log.v("bikepoint", "properties : "+((BikePoint)s).additionalProperties.get(0).getKey());
-
-                        Log.v("bikepoint", "properties : "+((BikePoint)s).additionalProperties.get(0).getValue());
-
-
-                    }
-                }
-            }
-        }
         //if you want to show nearPlaces on a map linked to the activity
         if (activity instanceof MainActivity) {
             //the activity should have a method to get a customizedMap

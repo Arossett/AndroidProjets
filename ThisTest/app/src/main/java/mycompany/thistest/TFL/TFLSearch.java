@@ -27,16 +27,11 @@ public class TFLSearch {
     /** Global instance of the HTTP transport. */
     private static final HttpTransport HTTP_TRANSPORT = new NetHttpTransport();
 
-    // Google API Key
-    private static final String API_KEY = "AIzaSyCEKx1Gh_u5r8yEulPe3MyLH_ZOcrPgHTc";
-
     // Google Places serach url's
     private static final String ARRIVALS_SEARCH_URL = "http://api.tfl.gov.uk/StopPoint/Bids/Arrivals";
     private static final String PLACES_SEARCH_BY_AREA = "http://api.tfl.gov.uk/StopPoint?";
     private static final String BIKE_POINTS = "http://api.tfl.gov.uk/BikePoint?";
 
-
-    //
     public List<Spot> searchbyArea(String type, double latitude, double longitude, int radius)
             throws Exception {
 
@@ -122,7 +117,7 @@ public class TFLSearch {
 
             Type ListType = new TypeToken<List<Arrival>>(){}.getType();
             List<Arrival> enums = gson.fromJson(request.execute().parseAsString(), ListType);
-            Log.v("nanana", request.getUrl().toString());
+
             return enums;
 
         } catch (Exception e) {

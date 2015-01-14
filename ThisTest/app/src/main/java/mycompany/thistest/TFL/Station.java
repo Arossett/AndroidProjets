@@ -75,7 +75,7 @@ public class Station implements Spot {
     //to merge stations (overground and tube) from the same place
     public  void initRailsList(){
         railIds = new ArrayList<String>();
-        railIds.clear();
+        railIds.add(naptanId);
     }
 
     public void addRailId(String id){

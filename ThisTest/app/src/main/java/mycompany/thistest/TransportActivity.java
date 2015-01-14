@@ -29,6 +29,8 @@ import mycompany.thistest.TFL.Station;
 
 public class TransportActivity extends Activity implements ListFragment.OnFragmentInteractionListener {
 
+    private ListFragment nextArrivalsListFragment;
+    private ArrayList<NextArrivalsItem> nextArrivalsItemList;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -43,6 +45,9 @@ public class TransportActivity extends Activity implements ListFragment.OnFragme
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_transport);
+
+
+
         if(type.equals("Train")){
             String name = stationName.split(" Rail Station")[0];
 
@@ -50,16 +55,7 @@ public class TransportActivity extends Activity implements ListFragment.OnFragme
         }
         else if(type.equals("Metro")||type.equals("Bus")) {
             //load transport next arrivals to the current station
-            new LoadArrivals(this, stationId).execute();
-
-            //if there is different ids linked to this station (for overground case for example)
-            //load arrivals for these other station ids
-            ArrayList<String> otherIds = ((Station)station).getRailId();
-            if (otherIds != null) {
-                for (String s : otherIds) {
-                    new LoadArrivals(this, s).execute();
-                }
-            }
+            new LoadArrivals(this, ((Station)station).getRailId()).execute();
         }else if(type.equals("Bike")){
             String s1 = ((BikePoint)station).getBikes();
             String s2 = ((BikePoint)station).getEmpty();
@@ -73,11 +69,9 @@ public class TransportActivity extends Activity implements ListFragment.OnFragme
                     findViewById(R.id.lv);
             myList.setAdapter(myAdapter);
         }
-
-
     }
 
-    public void addNewLineFragment(List<Arrival> arrivals){
+    public void addNewFragment(List<Arrival> arrivals){
 
         //can be improved by looking for arrivals by line for a stopPoint
         //sort arrivals by line
@@ -98,15 +92,16 @@ public class TransportActivity extends Activity implements ListFragment.OnFragme
         //TODO: fragment problem
         FragmentTransaction transaction = getFragmentManager().beginTransaction();
         ListFragment nextArrivalsListFragment = new ListFragment();
-        ArrayList<NextArrivalsItem> nextArrivalsItemList = new ArrayList<NextArrivalsItem>();
+        nextArrivalsItemList = new ArrayList<NextArrivalsItem>();
+
+        nextArrivalsListFragment.setmAdapter(new NextArrivalsListAdapter(this, nextArrivalsItemList));
+        transaction.add(R.id.container, nextArrivalsListFragment);
+        transaction.commit();
 
         //for each line, display a new fragment with arrivals sorted by platform
         for(HashMap.Entry<String, ArrayList<Arrival>> entry : arrivalsByLine.entrySet() ){
             nextArrivalsItemList.add(new NextArrivalsItem(entry.getKey(), entry.getValue()));
         }
-        nextArrivalsListFragment.setmAdapter(new NextArrivalsListAdapter(this, nextArrivalsItemList));
-        transaction.add(R.id.container, nextArrivalsListFragment);
-        transaction.commit();
 
     }
 

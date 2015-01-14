@@ -16,11 +16,11 @@ public class LoadArrivals extends AsyncTask<String, String, List<Arrival>> {
     // Progress dialog
     ProgressDialog pDialog;
     Activity activity;
-    String stationId;
+    ArrayList<String> stationIds;
 
-    public LoadArrivals(Activity a, String id){
+    public LoadArrivals(Activity a, ArrayList<String> ids){
         activity = a;
-        stationId = id;
+        stationIds = ids;
     }
 
     /**
@@ -43,7 +43,9 @@ public class LoadArrivals extends AsyncTask<String, String, List<Arrival>> {
         // Check if used is connected to Internet
         List<Arrival> arrivals = new ArrayList<Arrival>();
         try {
-            arrivals = new TFLSearch().searchArrivals(stationId);
+            for(String stationId : stationIds) {
+                arrivals.addAll(new TFLSearch().searchArrivals(stationId));
+            }
 
         } catch (Exception e) {
             e.printStackTrace();
@@ -62,11 +64,10 @@ public class LoadArrivals extends AsyncTask<String, String, List<Arrival>> {
             public void run() {
                 if(activity instanceof TransportActivity) {
                     //add fragments displaying all lines arrivals information
-                    ((TransportActivity) activity).addNewLineFragment(arrivals);
+                    ((TransportActivity) activity).addNewFragment(arrivals);
                 }
             }
         });
-
     }
 
 }
