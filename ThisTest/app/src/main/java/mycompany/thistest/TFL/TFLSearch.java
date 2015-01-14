@@ -15,7 +15,10 @@ import com.google.gson.JsonSyntaxException;
 import com.google.gson.reflect.TypeToken;
 
 import java.lang.reflect.Type;
+import java.util.ArrayList;
 import java.util.List;
+
+import mycompany.thistest.Interfaces.Spot;
 
 /**
  * Created by trsq9010 on 12/12/2014.
@@ -30,40 +33,15 @@ public class TFLSearch {
     // Google Places serach url's
     private static final String ARRIVALS_SEARCH_URL = "http://api.tfl.gov.uk/StopPoint/Bids/Arrivals";
     private static final String PLACES_SEARCH_BY_AREA = "http://api.tfl.gov.uk/StopPoint?";
+    private static final String BIKE_POINTS = "http://api.tfl.gov.uk/BikePoint?";
 
-    /**
-     * Searching places
 
-     * @return list of places
-     * */
-    /*public StationsList search(String s)
+    //
+    public List<Spot> searchbyArea(String type, double latitude, double longitude, int radius)
             throws Exception {
 
-        try {
-
-            HttpRequestFactory httpRequestFactory = createRequestFactory(HTTP_TRANSPORT);
-
-            HttpRequest request = httpRequestFactory
-                    .buildGetRequest(new GenericUrl(PLACES_SEARCH_URL));
-
-            request.getUrl().put("query", s);
-
-            request.getUrl().put("modes", "tube + overground");
-            StationsList list = request.execute().parseAs(StationsList.class);
-
-            return list;
-
-        } catch (JsonSyntaxException e) {
-
-            Log.e("JsonError:", e.getMessage());
-            return null;
-        }
-
-    }*/
-
-    public StationsList searchbyArea(String type, double latitude, double longitude, int radius)
-            throws Exception {
-
+        if(type.equals("Bike"))
+            return searchBikePoints(latitude, longitude, radius);
         try {
 
             HttpRequestFactory httpRequestFactory = createRequestFactory(HTTP_TRANSPORT);
@@ -86,15 +64,39 @@ public class TFLSearch {
             else if(type.equals("Bus")){
                 request.getUrl().put("stopTypes", "NaptanPublicBusCoachTram");
                 request.getUrl().put("modes", "bus");
-            }/*
-            else{
-                request.getUrl().put("stopTypes", "NaptanPublicBusCoachTram");
-                request.getUrl().put("modes", "bus");
-            }*/
+            }
 
             StationsList list = request.execute().parseAs(StationsList.class);
             list.updateList(type);
-            return list;
+            ArrayList<Spot> spots = new ArrayList<Spot>(list.stopPoints);
+            return spots;
+
+        } catch (JsonSyntaxException e) {
+
+            Log.e("JsonError:", e.getMessage());
+            return null;
+        }
+
+    }
+
+    public List<Spot> searchBikePoints(double latitude, double longitude, int radius)
+            throws Exception {
+
+        try {
+
+            HttpRequestFactory httpRequestFactory = createRequestFactory(HTTP_TRANSPORT);
+
+            HttpRequest request = httpRequestFactory
+                    .buildGetRequest(new GenericUrl(BIKE_POINTS));
+
+            request.getUrl().put("lat", latitude);
+            request.getUrl().put("lon", longitude);
+            request.getUrl().put("radius", radius);
+
+            BikePointsList list = request.execute().parseAs(BikePointsList.class);
+            ArrayList<Spot> spots = new ArrayList<Spot>(list.places);
+
+            return spots;
 
         } catch (JsonSyntaxException e) {
 
@@ -120,7 +122,7 @@ public class TFLSearch {
 
             Type ListType = new TypeToken<List<Arrival>>(){}.getType();
             List<Arrival> enums = gson.fromJson(request.execute().parseAsString(), ListType);
-
+            Log.v("nanana", request.getUrl().toString());
             return enums;
 
         } catch (Exception e) {

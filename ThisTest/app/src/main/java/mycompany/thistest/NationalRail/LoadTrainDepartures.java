@@ -1,4 +1,8 @@
-package mycompany.thistest.TFL;
+package mycompany.thistest.NationalRail;
+
+/**
+ * Created by trsq9010 on 12/01/2015.
+ */
 
 import android.app.Activity;
 import android.app.ProgressDialog;
@@ -7,20 +11,29 @@ import android.os.AsyncTask;
 import java.util.ArrayList;
 import java.util.List;
 
+import mycompany.thistest.TFL.Arrival;
+import mycompany.thistest.TFL.TFLSearch;
+import mycompany.thistest.TransportActivity;
+import android.app.Activity;
+import android.app.ProgressDialog;
+import android.os.AsyncTask;
+
+import java.util.List;
+
 import mycompany.thistest.TransportActivity;
 
 /**
  * Created by trsq9010 on 19/12/2014.
  */
-public class LoadArrivals extends AsyncTask<String, String, List<Arrival>> {
+public class LoadTrainDepartures extends AsyncTask<String, String, List<String>> {
     // Progress dialog
     ProgressDialog pDialog;
     Activity activity;
-    String stationId;
+    String stationName;
 
-    public LoadArrivals(Activity a, String id){
+    public LoadTrainDepartures(Activity a, String name){
         activity = a;
-        stationId = id;
+        stationName = name;
     }
 
     /**
@@ -39,30 +52,36 @@ public class LoadArrivals extends AsyncTask<String, String, List<Arrival>> {
     /**
      * getting Profile JSON
      * */
-    protected List<Arrival> doInBackground(String... args) {
+    protected List<String> doInBackground(String... args) {
+        List<String> trains = new ArrayList<String>();
         // Check if used is connected to Internet
-        List<Arrival> arrivals = new ArrayList<Arrival>();
         try {
-            arrivals = new TFLSearch().searchArrivals(stationId);
-
+            ReadCVS readCVS = new ReadCVS(activity);
+            String stationCode = readCVS.searchCodeStation(stationName);
+            RailHandler ex = new RailHandler();
+            String s = ex.getResponseString(stationCode);
+            XMLParser p = new XMLParser();
+            List<TrainDeparture> departures = p.DepartureParser(s);
+            for(TrainDeparture td : departures){
+                trains.add(td.toString());
+            }
         } catch (Exception e) {
             e.printStackTrace();
         }
-        return arrivals;
+        return trains;
     }
 
     /**
      * After completing background task Dismiss the progress dialog
      * **/
-    protected void onPostExecute(final List<Arrival> arrivals) {
+    protected void onPostExecute(final List<String> trains) {
         // dismiss the dialog after getting all products
         pDialog.dismiss();
         // updating UI from Background Thread
         activity.runOnUiThread(new Runnable() {
             public void run() {
                 if(activity instanceof TransportActivity) {
-                    //add fragments displaying all lines arrivals information
-                    ((TransportActivity) activity).addNewLineFragment(arrivals);
+                    ((TransportActivity) activity).setTrainDepartures(trains);
                 }
             }
         });

@@ -28,6 +28,7 @@ import java.util.List;
 import mycompany.thistest.Connectivity.GeocodeTask;
 import mycompany.thistest.Interfaces.Spot;
 import mycompany.thistest.PlacesSearch.LoadPlaces;
+import mycompany.thistest.TFL.BikePoint;
 import mycompany.thistest.TFL.LoadPlacesTFL;
 import mycompany.thistest.Connectivity.GPSTracker;
 import mycompany.thistest.PlacesSearch.Place;
@@ -45,9 +46,6 @@ public class CustomizedMap  {
     // Nearest places
     PlacesList nearPlaces;
 
-    // Nearest places
-    StationsList nearStations;
-
     // Map view
     GoogleMap map;
 
@@ -63,6 +61,8 @@ public class CustomizedMap  {
 
     HashMap<Marker, Spot> markerPlaces;
 
+    HashMap<Marker, Spot> markerStations;
+
     //radius of the perimeter where we look for places
     int radius;
 
@@ -74,7 +74,7 @@ public class CustomizedMap  {
 
     String types;
 
-    String[] transports;
+    String transports;
 
     //marker of the camera, needed to remove marker from previous location
     Marker pos;
@@ -91,6 +91,7 @@ public class CustomizedMap  {
         map.setPadding(0, utils.dpToPx(50, activity.getBaseContext()), 0, 0);
         markerRef = new HashMap<Marker, String>();
         markerPlaces = new HashMap<Marker, Spot>();
+        markerStations = new HashMap<Marker, Spot>();
 
         pos = null;
         GPSTracker gps = new GPSTracker(activity);
@@ -149,24 +150,28 @@ public class CustomizedMap  {
                 String reference = markerPlaces.get(marker).getId();
                 Intent in;
                 if(markerPlaces.get(marker).getClass().isInstance(new Place())) {
+
                     // Starting new intent
                     in = new Intent(activity.getApplicationContext(),
                             SinglePlaceActivity.class);
-
-                    // Sending place refrence id to single place activity stop pretending !!!
-                    // place refrence id used to get "Place full details"
+                    // Sending place reference id to single place activity stop pretending !!!
+                    // place reference id used to get "Place full details"
                     in.putExtra("reference", reference);
-                }else{
+                    activity.startActivity(in);
+
+                }else if(markerPlaces.get(marker).getClass().isInstance(new Station())
+                        ||markerPlaces.get(marker).getClass().isInstance(new BikePoint())){
+
                     in = new Intent(activity.getApplicationContext(), TransportActivity.class);
-                    in.putExtra("stationId", reference);
+                    in.putExtra("station", markerPlaces.get(marker));
+                   /* in.putExtra("stationId", reference);
+                    in.putExtra("type", transports);
+                    in.putExtra("stationName", markerPlaces.get(marker).getName());
                     ArrayList<String> otherIds = ((Station)markerPlaces.get(marker)).getRailId();
-                    in.putExtra("railIds", otherIds);
+                    in.putExtra("railIds", otherIds);*/
+                    activity.startActivity(in);
 
                 }
-                activity.startActivity(in);
-
-
-
             }
         });
 
@@ -262,10 +267,8 @@ public class CustomizedMap  {
 
     //method called by loadplaces when places have been found
     //save the nearest place in the customized map class
-    public void setNearStations(StationsList sl){
-        nearStations = sl;
-
-        ArrayList<Spot> spots = new ArrayList<Spot>(nearStations.stopPoints);
+    public void setNearStations(List<Spot> sl){
+        ArrayList<Spot> spots = (ArrayList<Spot>) sl;
         setMarkers(spots);
     }
 
@@ -333,17 +336,12 @@ public class CustomizedMap  {
     }
 
     //to save transports mode chosen by user
-    public void setTransports(String[] type){
+    public void setTransports(String type){
         transports = type;
         double lat = map.getCameraPosition().target.latitude;
         double lon = map.getCameraPosition().target.longitude;
-        for(String s : type)
-            new LoadPlacesTFL(s,lat, lon, radius, activity).execute();
+        new LoadPlacesTFL(transports, lat, lon, radius, activity).execute();
     }
-
-
-
-
 
     //to add markers on map following places found
    /* public void setMarkers(){
@@ -440,6 +438,7 @@ public class CustomizedMap  {
                         //get icon corresponding to the type of the place
                         int resID = activity.getResources().getIdentifier(mDrawableName, "drawable", activity.getPackageName());
                         Marker m;
+
                         //if the icon has not been found just add a default marker
                         if (resID == 0) {
                             m = (map.addMarker(new MarkerOptions()

@@ -64,17 +64,16 @@ public class LoadPlaces extends AsyncTask<String, String, String> {
 
         activity.runOnUiThread(new Runnable() {
             public void run() {
-            if(nearPlaces.results.isEmpty())
-                nearPlaces.results.add(new Place());
                 if (nearPlaces != null) {
-
+                    if(nearPlaces.results.isEmpty()) {
+                        nearPlaces.results.add(new Place());
+                    }
                     //if you want to show nearPlaces on a map linked to the activity
                     if (activity instanceof MainActivity) {
                         //the activity should have a method to get a customizedMap
                          ((MainActivity) activity).getMap().setNearPlaces(nearPlaces);
                     }
                 }
-
             }
         });
         try {

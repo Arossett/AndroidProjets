@@ -84,6 +84,7 @@
     <orderEntry type="library" exported="" name="google-oauth-client-1.18.0-rc" level="project" />
     <orderEntry type="library" exported="" name="gson-2.1" level="project" />
     <orderEntry type="library" exported="" name="jackson-core-asl-1.9.11" level="project" />
+    <orderEntry type="library" exported="" name="ksoap2-android-assembly-3.3.0-jar-with-dependencies" level="project" />
     <orderEntry type="library" exported="" name="google-http-client-android2-1.10.3-beta" level="project" />
     <orderEntry type="library" exported="" name="google-http-client-1.10.3-beta" level="project" />
     <orderEntry type="library" exported="" name="play-services-6.1.71" level="project" />

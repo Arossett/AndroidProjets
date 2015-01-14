@@ -229,7 +229,7 @@ public class MainActivity extends Activity implements TypesChoice.NoticeDialogLi
                 break;
             }
             case R.id.transport_settings: {
-                String[] myArray = list.toArray(new String[list.size()]);
+                String myArray = list.get(0);
                 map.setTransports(myArray);
                 break;
             }

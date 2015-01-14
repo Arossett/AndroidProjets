@@ -1,5 +1,7 @@
 package mycompany.thistest.TFL;
 
+import android.util.Log;
+
 import com.google.api.client.util.Key;
 
 import java.util.ArrayList;

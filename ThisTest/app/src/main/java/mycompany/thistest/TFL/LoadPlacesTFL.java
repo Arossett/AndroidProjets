@@ -4,14 +4,18 @@ import android.app.Activity;
 import android.os.AsyncTask;
 import android.util.Log;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import mycompany.thistest.Interfaces.Spot;
 import mycompany.thistest.MainActivity;
 
 /**
  * Created by trsq9010 on 08/12/2014.
  */
-public class LoadPlacesTFL extends AsyncTask<String, String, StationsList>{
+public class LoadPlacesTFL extends AsyncTask<String, String, List<Spot>>{
 
-    StationsList stationsList ;
+    List<Spot> stationsList ;
     String type;
     double latitude;
     double longitude;
@@ -28,13 +32,13 @@ public class LoadPlacesTFL extends AsyncTask<String, String, StationsList>{
 
     @Override
     protected void onPreExecute() {
-        stationsList = new StationsList();
+        stationsList = new ArrayList<Spot>();//new StationsList();
         super.onPreExecute();
 
     }
 
 
-    protected StationsList doInBackground(String... args) {
+    protected List<Spot> doInBackground(String... args) {
 
         // creating Places class object
         TFLSearch stationsSearch = new TFLSearch();
@@ -53,17 +57,29 @@ public class LoadPlacesTFL extends AsyncTask<String, String, StationsList>{
     }
 
 
-    protected void onPostExecute(StationsList stationsList) {
+    protected void onPostExecute(List<Spot> stationsList) {
         //if search has return null or empty list
         //create an empty stations list to override previous search
-       if (stationsList== null||stationsList.stopPoints.isEmpty()) {
-           stationsList = new StationsList();
-           stationsList.stopPoints.add(new Station());
+       if (stationsList==null||stationsList.isEmpty()) {
+           stationsList = new ArrayList<Spot>();
+           //use to erase previous search
+           //stationsList.add();
        }
        else {
-            for (Station s : stationsList.stopPoints) {
-                if (s.commonName != null)
-                    Log.v("nawak", s.commonName);
+            for (Spot s : stationsList) {
+                if (s.getName() != null)
+                    Log.v("nawak", s.getName());
+                if(s.getType().equals("Bike")){
+                    if(((BikePoint)s).additionalProperties!=null){
+                    Log.v("bikepoint", "properties : "+((BikePoint)s).additionalProperties.size());
+
+                    Log.v("bikepoint", "properties : "+((BikePoint)s).additionalProperties.get(0).getKey());
+
+                        Log.v("bikepoint", "properties : "+((BikePoint)s).additionalProperties.get(0).getValue());
+
+
+                    }
+                }
             }
         }
         //if you want to show nearPlaces on a map linked to the activity

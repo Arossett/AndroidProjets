@@ -76,15 +76,9 @@ public class ListFragment extends Fragment implements AbsListView.OnItemClickLis
             mParam2 = getArguments().getString(ARG_PARAM2);
         }
 
-        // TODO: Change Adapter to display your content
        /* nextArrivalsItemList = new ArrayList<NextArrivalsItem>();
         mAdapter = new NextArrivalsListAdapter(getActivity(), nextArrivalsItemList);*/
     }
-
-    /*public void addLineArrivals(String line, ArrayList<Arrival> arrivals){
-        nextArrivalsItemList.add(new NextArrivalsItem(line, arrivals));
-        mAdapter = new NextArrivalsListAdapter(getActivity(), nextArrivalsItemList);
-    }*/
 
     public void setmAdapter(ListAdapter adapter){
         mAdapter = adapter;

@@ -7,6 +7,10 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.ArrayAdapter;
+import android.widget.LinearLayout;
+import android.widget.ListView;
+import android.widget.TextView;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -15,42 +19,69 @@ import java.util.List;
 import mycompany.thistest.Fragments.NextArrivalsItem;
 import mycompany.thistest.Fragments.ListFragment;
 import mycompany.thistest.Fragments.NextArrivalsListAdapter;
+import mycompany.thistest.Interfaces.Spot;
+import mycompany.thistest.NationalRail.LoadTrainDepartures;
+import mycompany.thistest.TFL.BikePoint;
 import mycompany.thistest.TFL.LoadArrivals;
 import mycompany.thistest.TFL.Arrival;
+import mycompany.thistest.TFL.Station;
 
 
 public class TransportActivity extends Activity implements ListFragment.OnFragmentInteractionListener {
-    String stationId;
-    List<Arrival> arrivals;
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         Intent i = getIntent();
-        stationId = (String) i.getSerializableExtra("stationId");
+        /*String stationId = (String) i.getSerializableExtra("stationId");
+        String type = (String) i.getSerializableExtra("type");
+        String stationName = (String) i.getSerializableExtra("stationName");*/
+        Spot station = (Spot) i.getSerializableExtra("station");
+        String stationId = station.getId();
+        String type = station.getType();
+        String stationName = station.getName();
+
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_transport);
-        //load transport next arrivals to the current station
-        new LoadArrivals(this, stationId).execute();
+        if(type.equals("Train")){
+            String name = stationName.split(" Rail Station")[0];
 
-        //if there is different ids linked to this station (for overground case for example)
-        //load arrivals for these other station ids
-        if((ArrayList<String>)i.getSerializableExtra("railIds")!=null) {
-            ArrayList<String> railIds = (ArrayList<String>) i.getSerializableExtra("railIds");
-            for(String s :railIds){
-                new LoadArrivals(this, s).execute();
+            new LoadTrainDepartures(this, name).execute();
+        }
+        else if(type.equals("Metro")||type.equals("Bus")) {
+            //load transport next arrivals to the current station
+            new LoadArrivals(this, stationId).execute();
+
+            //if there is different ids linked to this station (for overground case for example)
+            //load arrivals for these other station ids
+            ArrayList<String> otherIds = ((Station)station).getRailId();
+            if (otherIds != null) {
+                for (String s : otherIds) {
+                    new LoadArrivals(this, s).execute();
+                }
             }
+        }else if(type.equals("Bike")){
+            String s1 = ((BikePoint)station).getBikes();
+            String s2 = ((BikePoint)station).getEmpty();
+            String[] bikes = new String[]{s1, s2};
+            ArrayAdapter<String> myAdapter=new
+                    ArrayAdapter<String>(
+                    this,
+                    android.R.layout.simple_list_item_1,
+                    bikes);
+            ListView myList=(ListView)
+                    findViewById(R.id.lv);
+            myList.setAdapter(myAdapter);
         }
 
+
     }
 
-    public void setArrivals(List<Arrival> arr){
-        arrivals = arr;
-    }
-
-    public void addNewLineFragment(){
+    public void addNewLineFragment(List<Arrival> arrivals){
 
         //can be improved by looking for arrivals by line for a stopPoint
         //sort arrivals by line
+
         HashMap<String, ArrayList<Arrival>> arrivalsByLine = new HashMap<String, ArrayList<Arrival>>();
         for(Arrival a: arrivals){
             Log.v("arrivalsdetails", "name "+  a.getLineName() + " destination " + a.getDestinationName() + " plateforme "+a.getPlatform());
@@ -71,10 +102,6 @@ public class TransportActivity extends Activity implements ListFragment.OnFragme
 
         //for each line, display a new fragment with arrivals sorted by platform
         for(HashMap.Entry<String, ArrayList<Arrival>> entry : arrivalsByLine.entrySet() ){
-            /*
-            LineDetails newFragment = LineDetails.newInstance(entry.getKey(), entry.getValue());
-            transaction.add(R.id.container, newFragment);
-            Log.v("newfragment",entry.getKey());*/
             nextArrivalsItemList.add(new NextArrivalsItem(entry.getKey(), entry.getValue()));
         }
         nextArrivalsListFragment.setmAdapter(new NextArrivalsListAdapter(this, nextArrivalsItemList));
@@ -107,6 +134,19 @@ public class TransportActivity extends Activity implements ListFragment.OnFragme
 
     @Override
     public void onFragmentInteraction(String id) {
+
+    }
+
+    public void setTrainDepartures(List<String> trainDepartures){
+
+        ArrayAdapter<String> myAdapter=new
+                ArrayAdapter<String>(
+                this,
+                android.R.layout.simple_list_item_1,
+                trainDepartures);
+        ListView myList=(ListView)
+                findViewById(R.id.lv);
+        myList.setAdapter(myAdapter);
 
     }
 }
