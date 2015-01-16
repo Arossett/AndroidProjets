@@ -34,41 +34,35 @@ public class TransportActivity extends Activity implements ListFragment.OnFragme
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
-        Intent i = getIntent();
-        /*String stationId = (String) i.getSerializableExtra("stationId");
-        String type = (String) i.getSerializableExtra("type");
-        String stationName = (String) i.getSerializableExtra("stationName");*/
-        Spot station = (Spot) i.getSerializableExtra("station");
-        String stationId = station.getId();
-        String type = station.getType();
-        String stationName = station.getName();
-
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_transport);
 
 
+            Intent i = getIntent();
+            Spot station = (Spot) i.getSerializableExtra("station");
+            String type = station.getType();
+            String stationName = station.getName();
 
-        if(type.equals("Train")){
-            String name = stationName.split(" Rail Station")[0];
+            if (type.equals("Train")) {
+                String name = stationName.split(" Rail Station")[0];
+                new LoadTrainDepartures(this, name).execute();
+            } else if (type.equals("Metro") || type.equals("Bus")) {
+                //load transport next arrivals to the current station
+                new LoadArrivals(this, ((Station) station).getRailId()).execute();
+            } else if (type.equals("Bike")) {
+                String s1 = ((BikePoint) station).getBikes();
+                String s2 = ((BikePoint) station).getEmpty();
+                String[] bikes = new String[]{s1, s2};
+                ArrayAdapter<String> myAdapter = new
+                        ArrayAdapter<String>(
+                        this,
+                        android.R.layout.simple_list_item_1,
+                        bikes);
+                ListView myList = (ListView)
+                        findViewById(R.id.lv);
+                myList.setAdapter(myAdapter);
+            }
 
-            new LoadTrainDepartures(this, name).execute();
-        }
-        else if(type.equals("Metro")||type.equals("Bus")) {
-            //load transport next arrivals to the current station
-            new LoadArrivals(this, ((Station)station).getRailId()).execute();
-        }else if(type.equals("Bike")){
-            String s1 = ((BikePoint)station).getBikes();
-            String s2 = ((BikePoint)station).getEmpty();
-            String[] bikes = new String[]{s1, s2};
-            ArrayAdapter<String> myAdapter=new
-                    ArrayAdapter<String>(
-                    this,
-                    android.R.layout.simple_list_item_1,
-                    bikes);
-            ListView myList=(ListView)
-                    findViewById(R.id.lv);
-            myList.setAdapter(myAdapter);
-        }
     }
 
     public void addNewFragment(List<Arrival> arrivals){
@@ -88,10 +82,8 @@ public class TransportActivity extends Activity implements ListFragment.OnFragme
             }
         }
 
-
-        //TODO: fragment problem
         FragmentTransaction transaction = getFragmentManager().beginTransaction();
-        ListFragment nextArrivalsListFragment = new ListFragment();
+        nextArrivalsListFragment = new ListFragment();
         nextArrivalsItemList = new ArrayList<NextArrivalsItem>();
 
         nextArrivalsListFragment.setmAdapter(new NextArrivalsListAdapter(this, nextArrivalsItemList));
@@ -143,5 +135,11 @@ public class TransportActivity extends Activity implements ListFragment.OnFragme
                 findViewById(R.id.lv);
         myList.setAdapter(myAdapter);
 
+    }
+
+    @Override
+    protected void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        //getFragmentManager().putFragment(outState, "listFragment", nextArrivalsListFragment);
     }
 }

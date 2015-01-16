@@ -3,10 +3,14 @@ package mycompany.thistest;
 import android.app.Activity;
 import android.content.Intent;
 import android.graphics.Color;
+import android.os.AsyncTask;
+import android.os.Parcel;
+import android.os.Parcelable;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.EditText;
+import android.widget.ProgressBar;
 import android.widget.Toast;
 
 import com.google.android.gms.maps.CameraUpdate;
@@ -20,6 +24,7 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -28,26 +33,24 @@ import java.util.List;
 import mycompany.thistest.Connectivity.GeocodeTask;
 import mycompany.thistest.Interfaces.Spot;
 import mycompany.thistest.PlacesSearch.LoadPlaces;
-import mycompany.thistest.TFL.BikePoint;
 import mycompany.thistest.TFL.LoadPlacesTFL;
 import mycompany.thistest.Connectivity.GPSTracker;
-import mycompany.thistest.PlacesSearch.Place;
 import mycompany.thistest.PlacesSearch.PlacesList;
-import mycompany.thistest.TFL.Station;
-import mycompany.thistest.TFL.StationsList;
 import mycompany.thistest.Utilities.Utils;
 
 /**
  * Created by trsq9010 on 16/12/2014.
  */
-public class CustomizedMap  {
+public class CustomizedMap implements Parcelable{
 
     public static final float ZOOM_MIN = 14.5f;
     private static final int SPOT_PLACE = 0;
     private static final int SPOT_STATION = 1;
     // Nearest places
-    PlacesList nearPlaces;
+    private PlacesList nearPlaces;
+    LoadPlaces mytask;
 
+    LoadPlacesTFL mytask2;
     // Map view
     GoogleMap map;
 
@@ -82,7 +85,10 @@ public class CustomizedMap  {
 
     boolean isConnected;
 
+    private List<Spot> transportStations;
+
     public CustomizedMap(GoogleMap m, MainActivity mapActivity){
+
         activity = mapActivity;
         map = m;
         map.setMyLocationEnabled(true);
@@ -100,6 +106,9 @@ public class CustomizedMap  {
         radius = activity.getResources().getInteger(R.integer.radius);
         max_pos = 0;
 
+        nearPlaces = null;
+        transportStations = null;
+
         CircleOptions circleOptions = new CircleOptions()
                 .center(oldPos)
                 .radius(max_pos)
@@ -111,6 +120,33 @@ public class CustomizedMap  {
         setCameraListener();
         setMarkersListener();
         setButtonFind();
+    }
+
+    public CustomizedMap(Activity a, GoogleMap ma, CustomizedMap m){
+        this.markerStations = m.markerStations;
+        this.markerPlaces = m.markerPlaces;
+        this.utils = m.utils;
+        this.circle = m.circle;
+        this.map = ma;
+        this.radius = m.radius;
+        this.oldPos = m.oldPos;
+        this.pos = map.addMarker(new MarkerOptions().position(map.getCameraPosition().target));
+        this.max_pos = m.max_pos;
+        this.types = m.types;
+        this.transports = m.transports;
+        this.isMoving = m.isMoving;
+        this.isConnected = m.isConnected;
+        this.activity = a;
+        map.setMyLocationEnabled(true);
+        setLocationButtonListener();
+        setCameraListener();
+        setMarkersListener();
+        setButtonFind();
+        this.nearPlaces = m.nearPlaces;
+        this.transportStations = m.transportStations;
+        updateNearPlaces(nearPlaces);
+        updateStations(transportStations);
+
     }
 
 
@@ -215,7 +251,8 @@ public class CustomizedMap  {
 
         //search near places around new location
         if(types!=null) {
-            new LoadPlaces(activity, radius, types, cameraPosition.target).execute();
+            //new LoadPlaces(activity, radius, types, cameraPosition.target).execute();
+            test();
         }
 
         if (pos != null) {
@@ -245,17 +282,20 @@ public class CustomizedMap  {
 
     //method called by loadplaces when places have been found
     //save the nearest place in the customized map class
-    public void setNearPlaces(PlacesList np){
+    public void updateNearPlaces(PlacesList np){
         nearPlaces = np;
-        ArrayList<Spot> spots = new ArrayList<Spot>(nearPlaces.results);
-        setMarkers(spots, SPOT_PLACE);
+        if(nearPlaces!=null) {
+            ArrayList<Spot> spots = new ArrayList<Spot>(nearPlaces.results);
+            setMarkers(spots, SPOT_PLACE);
+        }
     }
 
     //method called by loadplaces when places have been found
     //save the nearest place in the customized map class
-    public void setNearStations(List<Spot> sl){
-        ArrayList<Spot> spots = (ArrayList<Spot>) sl;
-        setMarkers(spots, SPOT_STATION);
+    public void updateStations(List<Spot> sl){
+
+        transportStations = sl;
+        setMarkers(sl, SPOT_STATION);
     }
 
     //true if the user is moving map
@@ -267,15 +307,13 @@ public class CustomizedMap  {
     //should reload places
     public void setTypes(String t){
         types = t;
-        new LoadPlaces(activity, radius, types, map.getCameraPosition().target).execute();
+        //new LoadPlaces(activity, radius, types, map.getCameraPosition().target).execute();
+        test();
+
     }
 
     public CameraPosition getCameraPosition(){
         return map.getCameraPosition();
-    }
-
-    public void animateCamera(CameraUpdate camUpdate){
-        map.animateCamera(camUpdate);
     }
 
     //to use if beginning's location should be different from user's one
@@ -326,7 +364,8 @@ public class CustomizedMap  {
         transports = type;
         double lat = map.getCameraPosition().target.latitude;
         double lon = map.getCameraPosition().target.longitude;
-        new LoadPlacesTFL(transports, lat, lon, radius, activity).execute();
+        //new LoadPlacesTFL(transports, lat, lon, radius, activity).execute();
+        test2();
     }
 
     //to add markers on map following places found
@@ -383,7 +422,6 @@ public class CustomizedMap  {
                     iterator.remove();
                 }
                 markerPlaces = newSpots;
-
                 break;
             }
             case SPOT_STATION :{
@@ -399,5 +437,69 @@ public class CustomizedMap  {
                 break;
             }
         }
+
+        if((mytask==null||mytask.getStatus()== AsyncTask.Status.FINISHED)
+                ||(mytask2==null||mytask2.getStatus()== AsyncTask.Status.FINISHED) ){
+            ProgressBar pb = (ProgressBar) activity.findViewById(R.id.progressBar);
+
+            pb.setVisibility(View.INVISIBLE);
+        }
+    }
+
+    @Override
+    public int describeContents() {
+        return 0;
+    }
+
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+
+    }
+
+    private void test(){
+        ProgressBar pb = (ProgressBar) activity.findViewById(R.id.progressBar);
+        pb.setIndeterminate(true);
+        pb.setVisibility(View.VISIBLE);
+
+        if(mytask!=null&&mytask.getStatus()!= AsyncTask.Status.FINISHED) {
+            mytask.cancel(true);
+        }
+
+        mytask = new LoadPlaces(radius, types, map.getCameraPosition().target);
+
+        mytask.setMyTaskCompleteListener(new LoadPlaces.OnTaskComplete() {
+            @Override
+            public void setMyTaskComplete(PlacesList places) {
+                if (places != null) {
+                    updateNearPlaces(places);
+                }
+            }
+        });
+        mytask.execute();
+    }
+
+    public void test2(){
+        ProgressBar pb = (ProgressBar) activity.findViewById(R.id.progressBar);
+        pb.setIndeterminate(true);
+        pb.setVisibility(View.VISIBLE);
+
+        if(mytask2!=null&&mytask2.getStatus()!= AsyncTask.Status.FINISHED) {
+            mytask2.cancel(true);
+        }
+
+        double lat = map.getCameraPosition().target.latitude;
+        double lon = map.getCameraPosition().target.longitude;
+
+        mytask2 = new LoadPlacesTFL(transports,lat, lon, radius);
+
+        mytask2.setMyTaskCompleteListener(new LoadPlacesTFL.OnTaskComplete() {
+            @Override
+            public void setMyTaskComplete(List<Spot> places) {
+                if (places != null) {
+                    updateStations(places);
+                }
+            }
+        });
+        mytask2.execute();
     }
 }

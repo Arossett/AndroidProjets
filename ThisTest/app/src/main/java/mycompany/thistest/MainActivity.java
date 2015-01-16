@@ -1,6 +1,7 @@
 package mycompany.thistest;
 
 import android.app.Activity;
+import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
@@ -13,17 +14,16 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.Window;
 import android.widget.Button;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
 
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.MapFragment;
-import com.google.android.gms.maps.model.LatLng;
+import com.google.android.gms.maps.model.MarkerOptions;
 
-import java.lang.reflect.Array;
 import java.util.ArrayList;
-import java.util.List;
 
 import mycompany.thistest.Connectivity.GoogleServicesConnectionDetector;
 import mycompany.thistest.Connectivity.ConnectivityChangeReceiver;
@@ -39,7 +39,10 @@ public class MainActivity extends Activity implements TypesChoice.NoticeDialogLi
     CustomizedMap map;
 
     //types of places to find
-    String types;
+    String placesTypes;
+
+    //types of places to find
+    String transportType;
 
     //true if Google Play Services are available
     boolean isService;
@@ -47,6 +50,7 @@ public class MainActivity extends Activity implements TypesChoice.NoticeDialogLi
     //to check change of connection
     ConnectivityChangeReceiver connectivityChangeReceiver;
 
+    //to be sure that there is no dialog displayed yet
     boolean isDialog;
 
     //used to get former position on the map and information displayed when screen is rotated
@@ -67,9 +71,38 @@ public class MainActivity extends Activity implements TypesChoice.NoticeDialogLi
         if(isService) {
             setContentView(R.layout.activity_places_map);
 
-            //create a customized map used from map fragment
-            GoogleMap m = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
-            map = new CustomizedMap(m, this);
+
+
+            //used to restore view when app rotated
+            if (savedInstanceState != null) {
+                placesTypes = savedInstanceState.getString("places_types");
+                //transportType = savedInstanceState
+
+                //map.setTypes(placesTypes);
+                /*map.setOldPos(new LatLng
+                        (savedInstanceState.getDouble("latitude"), savedInstanceState.getDouble("longitude")));*/
+
+                CustomizedMap customMap =  savedInstanceState.getParcelable("map");
+                GoogleMap googleMap = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
+                if(customMap !=null) {
+                    map = new CustomizedMap(this, googleMap, customMap );
+                }
+                else {
+                    map = new CustomizedMap(googleMap, this);
+                }
+
+                isDialog = savedInstanceState.getBoolean("isDialogDisplayed");
+
+
+            } else {
+                placesTypes = null;
+                isDialog = false;
+                //create a customized map from map fragment
+                GoogleMap m = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
+                m.addMarker(new MarkerOptions().title("nana").position(m.getCameraPosition().target));
+                map = new CustomizedMap(m, this);
+
+            }
 
             //initialize the connectionChange receiver
             connectivityChangeReceiver =  new ConnectivityChangeReceiver(new Handler() {
@@ -78,42 +111,40 @@ public class MainActivity extends Activity implements TypesChoice.NoticeDialogLi
                     map.setIsConnected(msg.getData().getBoolean("isConnected"));
                 }});
 
-                registerReceiver(
+            registerReceiver(
                     connectivityChangeReceiver,
                     new IntentFilter(
                             ConnectivityManager.CONNECTIVITY_ACTION));
 
 
-            //used to restore view when app rotated
-            if (savedInstanceState != null) {
-                types = savedInstanceState.getString("types");
-                map.setTypes(types);
-                map.setOldPos(new LatLng
-                        (savedInstanceState.getDouble("latitude"), savedInstanceState.getDouble("longitude")));
-                isDialog = savedInstanceState.getBoolean("isDialogDisplayed");
-                Log.v("nawak", "dialog displayed? " + isDialog);
-            } else {
-                types = null;
-                isDialog = false;
-            }
 
-
+            //to add listener on button "See list"
             setButtonsListener();
 
-            //to display choices window
+            //to display choices window when app is starting (check if there is no dialog yet)
             if (!isDialog) {
                 myDiag = new TypesChoice();
                 Bundle diagBundle = new Bundle();
+
+                //type of places to look for
                 diagBundle.putStringArray("types",getResources().getStringArray(R.array.place_types));
+
+                //to identify the dialog fragment (used for places search in this case)
                 diagBundle.putInt("search_id", R.id.place_settings);
+
+                //to indicate if multiple choice can be done
                 diagBundle.putBoolean("isMultipleChoice", true);
+
+                //true if user can close dialog without killing app
                 diagBundle.putBoolean("closable", false);
+
                 myDiag.setArguments(diagBundle);
                 myDiag.show(getFragmentManager(), "Diag");
 
                 isDialog = true;
             }
         }
+
         //if Google Services are not available, display a message
         else{
             RelativeLayout rl = new RelativeLayout(getApplicationContext());
@@ -138,14 +169,12 @@ public class MainActivity extends Activity implements TypesChoice.NoticeDialogLi
                             PlacesListActivity.class);
                     // passing near places to map activity
                     i.putExtra("near_places", map.getNearPlaces());
-                    i.putExtra("types", types);
+                    i.putExtra("types", placesTypes);
                     startActivity(i);
                 }
             }
         };
         b.setOnClickListener(onClickListener);
-
-
     }
 
     @Override
@@ -159,11 +188,14 @@ public class MainActivity extends Activity implements TypesChoice.NoticeDialogLi
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
-        outState.putString("types", types);
-        outState.putDouble("latitude", map.getCameraPosition().target.latitude);
-        outState.putDouble("longitude",map.getCameraPosition().target.longitude);
+        //type of places
+        //outState.putString("places_types", placesTypes);
+        //outState.putDouble("latitude", map.getCameraPosition().target.latitude);
+        //outState.putDouble("longitude",map.getCameraPosition().target.longitude);
 
         outState.putBoolean("isDialogDisplayed", isDialog);
+
+        outState.putParcelable("map", getMap());
         super.onSaveInstanceState(outState);
     }
 
@@ -212,7 +244,6 @@ public class MainActivity extends Activity implements TypesChoice.NoticeDialogLi
     //implement method when positive button on choices dialog has been clicked
     @Override
     public boolean onDialogPositiveClick(TypesChoice dialog) {
-
         //get list of items selected
         ArrayList<String> list = dialog.getmSelectedItems();
         //check what kind of choices have been made
@@ -221,16 +252,16 @@ public class MainActivity extends Activity implements TypesChoice.NoticeDialogLi
         //switch between the different kind of choices that can be made with a TypesChoice Dialog
         switch (id){
             case R.id.place_settings: {
-                types = "";
+                placesTypes = "";
                 for (String s : list) {
-                    types = types + "|" + s;
+                    placesTypes = placesTypes + "|" + s;
                 }
-                map.setTypes(types);
+                map.setTypes(placesTypes);
                 break;
             }
             case R.id.transport_settings: {
-                String myArray = list.get(0);
-                map.setTransports(myArray);
+                transportType = list.get(0);
+                map.setTransports(transportType);
                 break;
             }
             default:{

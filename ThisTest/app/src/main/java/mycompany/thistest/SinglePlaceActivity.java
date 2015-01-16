@@ -44,7 +44,7 @@ public class SinglePlaceActivity extends Activity {
         Intent i = getIntent();
 
         // Place referece id
-        String reference = i.getStringExtra(KEY_REFERENCE);
+        String reference = (String)i.getSerializableExtra(KEY_REFERENCE);
 
         // Calling a Async Background thread
         new LoadPlaceDetails(SinglePlaceActivity.this, googlePlaces).execute(reference);
