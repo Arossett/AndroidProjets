@@ -12,7 +12,7 @@ public class NextArrivalsItem {
 
     private String itemTitle;
     HashMap<String, ArrayList<Arrival>> arrivalsByPlatform;
-    ArrayList<Arrival> arrivals;
+    ArrayList<String> arrivals;
 
     public String getItemTitle() {
         return itemTitle;
@@ -22,13 +22,13 @@ public class NextArrivalsItem {
         this.itemTitle = itemTitle;
     }
 
-    public NextArrivalsItem(String title,  ArrayList<Arrival> arr){
+    public NextArrivalsItem(String title,  ArrayList<String> arr){
         this.itemTitle = title;
         arrivals = arr;
         //arrivalsByPlatform = setListArrivals(arrivals);
     }
 
-    public ArrayList<Arrival> getArrivals(){
+    public ArrayList<String> getArrivals(){
         return arrivals;
     }
 

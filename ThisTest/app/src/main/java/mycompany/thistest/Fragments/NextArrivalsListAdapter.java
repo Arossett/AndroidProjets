@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
+import android.widget.ListView;
 import android.widget.TextView;
 import java.util.List;
 
@@ -55,13 +56,20 @@ public class NextArrivalsListAdapter extends ArrayAdapter {
                 holder.linearLayout = (LinearLayout)viewToUse.findViewById(R.id.linLayout);
 
                //to display arrivals on screen
-               for(Arrival a: item.getArrivals()) {
+               /*for(String a: item.getArrivals()) {
                     TextView tv = new TextView(getContext());
-                    tv.setText(a.toString());
+                    tv.setText(a);
                     holder.linearLayout.addView(tv);
-                }
+                }*/
 
-
+                ArrayAdapter<String> myAdapter = new
+                        ArrayAdapter<String>(
+                        getContext(),
+                        android.R.layout.simple_list_item_1,
+                        item.getArrivals());
+                ListView myList = (ListView)
+                        viewToUse.findViewById(R.id.arrivalsList);
+                myList.setAdapter(myAdapter);
                 viewToUse.setTag(holder);
             } else {
                 viewToUse = convertView;

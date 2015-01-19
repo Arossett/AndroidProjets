@@ -10,7 +10,8 @@ import android.view.View;
 import android.widget.RatingBar;
 import android.widget.TextView;
 
-import mycompany.thistest.PlacesSearch.LoadPlaceDetails;
+import mycompany.thistest.LoadClasses.LoadGooglePlaces;
+import mycompany.thistest.LoadClasses.LoadPlaceDetails;
 import mycompany.thistest.Connectivity.GoogleServicesConnectionDetector;
 import mycompany.thistest.Dialogs.AlertDialogManager;
 import mycompany.thistest.PlacesSearch.GooglePlaces;
@@ -47,11 +48,22 @@ public class SinglePlaceActivity extends Activity {
         String reference = (String)i.getSerializableExtra(KEY_REFERENCE);
 
         // Calling a Async Background thread
-        new LoadPlaceDetails(SinglePlaceActivity.this, googlePlaces).execute(reference);
+        //new LoadPlaceDetails(SinglePlaceActivity.this, googlePlaces).execute(reference);
+        LoadPlaceDetails placeDetailsSearch = new LoadPlaceDetails();
+        placeDetailsSearch.setMyTaskCompleteListener(new LoadGooglePlaces.OnTaskComplete() {
+            @Override
+            public void setMyTaskComplete(Object obj) {
+                if (obj != null) {
+                    setPlaceDetails((PlaceDetails) obj);
+                }
+            }
+        });
+        placeDetailsSearch.execute(reference);
     }
 
     public void setPlaceDetails(PlaceDetails pD){
         placeDetails = pD;
+        showDetails();
     }
 
     public void showDetails(){

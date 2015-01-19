@@ -2,8 +2,11 @@ package mycompany.thistest;
 
 import android.app.Activity;
 import android.content.Intent;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
+import android.graphics.Canvas;
 import android.graphics.Color;
-import android.os.AsyncTask;
+import android.graphics.Paint;
 import android.os.Parcel;
 import android.os.Parcelable;
 import android.util.Log;
@@ -13,7 +16,6 @@ import android.widget.EditText;
 import android.widget.ProgressBar;
 import android.widget.Toast;
 
-import com.google.android.gms.maps.CameraUpdate;
 import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
@@ -24,7 +26,6 @@ import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
@@ -32,8 +33,8 @@ import java.util.List;
 
 import mycompany.thistest.Connectivity.GeocodeTask;
 import mycompany.thistest.Interfaces.Spot;
-import mycompany.thistest.PlacesSearch.LoadPlaces;
-import mycompany.thistest.TFL.LoadPlacesTFL;
+import mycompany.thistest.LoadClasses.LoadGooglePlaces;
+import mycompany.thistest.LoadClasses.LoadStationsTFL;
 import mycompany.thistest.Connectivity.GPSTracker;
 import mycompany.thistest.PlacesSearch.PlacesList;
 import mycompany.thistest.Utilities.Utils;
@@ -48,9 +49,9 @@ public class CustomizedMap implements Parcelable{
     private static final int SPOT_STATION = 1;
     // Nearest places
     private PlacesList nearPlaces;
-    LoadPlaces mytask;
+    LoadGooglePlaces loadPlaces;
 
-    LoadPlacesTFL mytask2;
+    LoadStationsTFL loadStations;
     // Map view
     GoogleMap map;
 
@@ -81,14 +82,15 @@ public class CustomizedMap implements Parcelable{
     //marker of the camera, needed to remove marker from previous location
     Marker pos;
 
-    boolean isMoving;
+    //boolean isMoving;
 
     boolean isConnected;
 
     private List<Spot> transportStations;
 
     public CustomizedMap(GoogleMap m, MainActivity mapActivity){
-
+        loadPlaces = new LoadGooglePlaces();
+        loadStations = new LoadStationsTFL();
         activity = mapActivity;
         map = m;
         map.setMyLocationEnabled(true);
@@ -96,11 +98,9 @@ public class CustomizedMap implements Parcelable{
         map.setPadding(0, utils.dpToPx(50, activity.getBaseContext()), 0, 0);
         markerPlaces = new HashMap<Marker, Spot>();
         markerStations = new HashMap<Marker, Spot>();
-
         pos = null;
         GPSTracker gps = new GPSTracker(activity);
         oldPos = new LatLng(gps.getLatitude(), gps.getLongitude());
-        isMoving = true;
         isConnected = true;
         transports = null;
         radius = activity.getResources().getInteger(R.integer.radius);
@@ -125,6 +125,8 @@ public class CustomizedMap implements Parcelable{
     public CustomizedMap(Activity a, GoogleMap ma, CustomizedMap m){
         this.markerStations = m.markerStations;
         this.markerPlaces = m.markerPlaces;
+        this.loadPlaces = m.loadPlaces;
+        this.loadStations = m.loadStations;
         this.utils = m.utils;
         this.circle = m.circle;
         this.map = ma;
@@ -134,7 +136,6 @@ public class CustomizedMap implements Parcelable{
         this.max_pos = m.max_pos;
         this.types = m.types;
         this.transports = m.transports;
-        this.isMoving = m.isMoving;
         this.isConnected = m.isConnected;
         this.activity = a;
         map.setMyLocationEnabled(true);
@@ -142,13 +143,21 @@ public class CustomizedMap implements Parcelable{
         setCameraListener();
         setMarkersListener();
         setButtonFind();
+
         this.nearPlaces = m.nearPlaces;
         this.transportStations = m.transportStations;
-        updateNearPlaces(nearPlaces);
-        updateStations(transportStations);
+        if(!this.loadPlaces.isFinished()) {
+            searchPlaces();
+        }else {
+            updateNearPlaces(nearPlaces);
+        }
+        if(!this.loadStations.isFinished()) {
+            searchStations();
+        }else {
+            updateStations(transportStations);
+        }
 
     }
-
 
     private void setLocationButtonListener(){
         map.setOnMyLocationButtonClickListener(new GoogleMap.OnMyLocationButtonClickListener() {
@@ -221,7 +230,7 @@ public class CustomizedMap implements Parcelable{
                     //if camera is closed enough and has moved enough to update the map
                     // (or if previous search is empty try to get new places)
                     if (cameraPosition.zoom >= ZOOM_MIN) {
-                        if ((utils.distFrom(oldPos, cameraPosition.target) > radius / 2 || markerPlaces.isEmpty()) && isMoving) {
+                        if ((utils.distFrom(oldPos, cameraPosition.target) > radius / 2 || markerPlaces.isEmpty()) /*&& isMoving*/) {
                             updateMap();
                         }
                     } else {
@@ -251,8 +260,7 @@ public class CustomizedMap implements Parcelable{
 
         //search near places around new location
         if(types!=null) {
-            //new LoadPlaces(activity, radius, types, cameraPosition.target).execute();
-            test();
+            searchPlaces();
         }
 
         if (pos != null) {
@@ -262,7 +270,7 @@ public class CustomizedMap implements Parcelable{
         //add marker on the new location
         pos = map.addMarker(new MarkerOptions().position(cameraPosition.target));
 
-        isMoving = false;
+        //isMoving = false;
 
         //draw a circle surrounding all places found
         if (circle == null) {
@@ -299,26 +307,20 @@ public class CustomizedMap implements Parcelable{
     }
 
     //true if the user is moving map
-    public void setIsMoving(boolean b){
+   /* public void setIsMoving(boolean b){
         isMoving = b;
-    }
+    }*/
 
     //change types of points of interests
     //should reload places
     public void setTypes(String t){
         types = t;
         //new LoadPlaces(activity, radius, types, map.getCameraPosition().target).execute();
-        test();
-
+        searchPlaces();
     }
 
     public CameraPosition getCameraPosition(){
         return map.getCameraPosition();
-    }
-
-    //to use if beginning's location should be different from user's one
-    public void setOldPos(LatLng pos){
-        oldPos = pos;
     }
 
     //used to update connection state for each change
@@ -362,10 +364,7 @@ public class CustomizedMap implements Parcelable{
     //to save transports mode chosen by user
     public void setTransports(String type){
         transports = type;
-        double lat = map.getCameraPosition().target.latitude;
-        double lon = map.getCameraPosition().target.longitude;
-        //new LoadPlacesTFL(transports, lat, lon, radius, activity).execute();
-        test2();
+        searchStations();
     }
 
     //to add markers on map following places found
@@ -395,6 +394,21 @@ public class CustomizedMap implements Parcelable{
                     int resID = activity.getResources().getIdentifier(mDrawableName, "drawable", activity.getPackageName());
                     Marker m;
 
+                    Bitmap bmp0 = BitmapFactory.decodeResource(activity.getResources(), resID);
+                    Bitmap bmp = bmp0.copy(Bitmap.Config.ARGB_8888, true);
+                    Canvas canvas1 = new Canvas(bmp);
+
+                    // paint defines the text color,
+                    // stroke width, size
+                    Paint color = new Paint();
+                    color.setTextSize(10);
+                    color.setColor(Color.BLACK);
+
+                    //modify canvas
+                    canvas1.drawBitmap(BitmapFactory.decodeResource(activity.getResources(),
+                            resID), 0,0, color);
+                    canvas1.drawText("50",bmp.getWidth()/2,bmp.getHeight()/2, color);
+
                     //if the icon has not been found just add a default marker
                     if (resID == 0) {
                         m = (map.addMarker(new MarkerOptions()
@@ -404,7 +418,7 @@ public class CustomizedMap implements Parcelable{
                         m = (map.addMarker(new MarkerOptions()
                                 .position(new LatLng(s.getLatitude(), s.getLongitude()))
                                 .title(s.getName())
-                                .icon(BitmapDescriptorFactory.fromResource(resID))));
+                                .icon(BitmapDescriptorFactory.fromBitmap(bmp))));
                     }
                     newSpots.put(m, s);
                 } else {
@@ -437,13 +451,6 @@ public class CustomizedMap implements Parcelable{
                 break;
             }
         }
-
-        if((mytask==null||mytask.getStatus()== AsyncTask.Status.FINISHED)
-                ||(mytask2==null||mytask2.getStatus()== AsyncTask.Status.FINISHED) ){
-            ProgressBar pb = (ProgressBar) activity.findViewById(R.id.progressBar);
-
-            pb.setVisibility(View.INVISIBLE);
-        }
     }
 
     @Override
@@ -453,53 +460,58 @@ public class CustomizedMap implements Parcelable{
 
     @Override
     public void writeToParcel(Parcel dest, int flags) {
-
     }
 
-    private void test(){
+    private void searchPlaces(){
         ProgressBar pb = (ProgressBar) activity.findViewById(R.id.progressBar);
         pb.setIndeterminate(true);
         pb.setVisibility(View.VISIBLE);
 
-        if(mytask!=null&&mytask.getStatus()!= AsyncTask.Status.FINISHED) {
-            mytask.cancel(true);
+        if(!loadPlaces.isFinished()){
+            loadPlaces.cancel(true);
         }
 
-        mytask = new LoadPlaces(radius, types, map.getCameraPosition().target);
-
-        mytask.setMyTaskCompleteListener(new LoadPlaces.OnTaskComplete() {
+        loadPlaces = new LoadGooglePlaces(radius, types, map.getCameraPosition().target);
+        loadPlaces.setMyTaskCompleteListener(new LoadGooglePlaces.OnTaskComplete() {
             @Override
-            public void setMyTaskComplete(PlacesList places) {
-                if (places != null) {
-                    updateNearPlaces(places);
+            public void setMyTaskComplete(Object obj) {
+                if (obj != null) {
+                    updateNearPlaces((PlacesList)obj);
+                }
+                if((loadStations.isFinished())){
+                    ProgressBar pb = (ProgressBar) activity.findViewById(R.id.progressBar);
+                    pb.setVisibility(View.INVISIBLE);
                 }
             }
         });
-        mytask.execute();
+        loadPlaces.execute();
+
+
     }
 
-    public void test2(){
+    public void searchStations(){
         ProgressBar pb = (ProgressBar) activity.findViewById(R.id.progressBar);
         pb.setIndeterminate(true);
         pb.setVisibility(View.VISIBLE);
 
-        if(mytask2!=null&&mytask2.getStatus()!= AsyncTask.Status.FINISHED) {
-            mytask2.cancel(true);
+        if(!loadStations.isFinished()) {
+            loadStations.cancel(true);
         }
 
-        double lat = map.getCameraPosition().target.latitude;
-        double lon = map.getCameraPosition().target.longitude;
 
-        mytask2 = new LoadPlacesTFL(transports,lat, lon, radius);
+        loadStations = new LoadStationsTFL(transports,map.getCameraPosition().target, radius);
 
-        mytask2.setMyTaskCompleteListener(new LoadPlacesTFL.OnTaskComplete() {
+        loadStations.setMyTaskCompleteListener(new LoadStationsTFL.OnTaskComplete() {
+
             @Override
-            public void setMyTaskComplete(List<Spot> places) {
-                if (places != null) {
-                    updateStations(places);
+            public void setMyTaskComplete(Object obj) {
+                updateStations((List<Spot>)obj);
+                if((loadPlaces.isFinished())){
+                    ProgressBar pb = (ProgressBar) activity.findViewById(R.id.progressBar);
+                    pb.setVisibility(View.INVISIBLE);
                 }
             }
         });
-        mytask2.execute();
+        loadStations.execute();
     }
 }

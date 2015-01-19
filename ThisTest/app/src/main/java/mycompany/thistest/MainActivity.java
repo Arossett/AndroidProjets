@@ -1,7 +1,6 @@
 package mycompany.thistest;
 
 import android.app.Activity;
-import android.app.ProgressDialog;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.res.Configuration;
@@ -14,7 +13,6 @@ import android.view.Menu;
 import android.view.MenuItem;
 import android.view.MotionEvent;
 import android.view.View;
-import android.view.Window;
 import android.widget.Button;
 import android.widget.RelativeLayout;
 import android.widget.TextView;
@@ -101,7 +99,6 @@ public class MainActivity extends Activity implements TypesChoice.NoticeDialogLi
                 GoogleMap m = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
                 m.addMarker(new MarkerOptions().title("nana").position(m.getCameraPosition().target));
                 map = new CustomizedMap(m, this);
-
             }
 
             //initialize the connectionChange receiver
@@ -178,23 +175,10 @@ public class MainActivity extends Activity implements TypesChoice.NoticeDialogLi
     }
 
     @Override
-    public boolean dispatchTouchEvent(MotionEvent ev) {
-        //used so the map is not always updated when user is still moving it
-        if(ev.getAction()==MotionEvent.ACTION_UP) {
-            map.setIsMoving(true);
-        }
-        return super.dispatchTouchEvent(ev);
-    }
-
-    @Override
     protected void onSaveInstanceState(Bundle outState) {
         //type of places
-        //outState.putString("places_types", placesTypes);
-        //outState.putDouble("latitude", map.getCameraPosition().target.latitude);
-        //outState.putDouble("longitude",map.getCameraPosition().target.longitude);
-
+        outState.putString("places_types", placesTypes);
         outState.putBoolean("isDialogDisplayed", isDialog);
-
         outState.putParcelable("map", getMap());
         super.onSaveInstanceState(outState);
     }
@@ -235,9 +219,6 @@ public class MainActivity extends Activity implements TypesChoice.NoticeDialogLi
             myDiag.show(getFragmentManager(), "Diag");
             return true;
         }
-
-
-
         return super.onOptionsItemSelected(item);
     }
 

@@ -24,7 +24,6 @@ public class GooglePlaces {
 
     // Google Places serach url's
     private static final String PLACES_SEARCH_URL = "https://maps.googleapis.com/maps/api/place/search/json?";
-    private static final String PLACES_TEXT_SEARCH_URL = "https://maps.googleapis.com/maps/api/place/search/json?";
     private static final String PLACES_DETAILS_URL = "https://maps.googleapis.com/maps/api/place/details/json?";
 
     private double _latitude;
@@ -56,7 +55,6 @@ public class GooglePlaces {
             request.getUrl().put("key", API_KEY);
 
             request.getUrl().put("location", _latitude + "," + _longitude);
-            //request.getUrl().put("radius", _radius); // in meters
             request.getUrl().put("sensor", "false");
             request.getUrl().put("rankby","distance");
 

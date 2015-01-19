@@ -128,8 +128,6 @@ public class TFLSearch {
 
     }
 
-
-
     /**
      * Creating http request Factory
      * */

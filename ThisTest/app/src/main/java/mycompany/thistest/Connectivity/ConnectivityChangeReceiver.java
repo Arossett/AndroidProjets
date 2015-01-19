@@ -59,10 +59,5 @@ public class ConnectivityChangeReceiver
         }
     }
 
-    public boolean getConnectivity(){
-        return isConnected;
-    }
-
-
 
 }
