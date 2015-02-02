@@ -20,8 +20,6 @@ import com.google.android.gms.maps.CameraUpdateFactory;
 import com.google.android.gms.maps.GoogleMap;
 import com.google.android.gms.maps.model.BitmapDescriptorFactory;
 import com.google.android.gms.maps.model.CameraPosition;
-import com.google.android.gms.maps.model.Circle;
-import com.google.android.gms.maps.model.CircleOptions;
 import com.google.android.gms.maps.model.LatLng;
 import com.google.android.gms.maps.model.Marker;
 import com.google.android.gms.maps.model.MarkerOptions;
@@ -33,10 +31,13 @@ import java.util.List;
 
 import mycompany.thistest.Connectivity.GeocodeTask;
 import mycompany.thistest.Interfaces.Spot;
+import mycompany.thistest.LoadClasses.LoadData;
 import mycompany.thistest.LoadClasses.LoadGooglePlaces;
 import mycompany.thistest.LoadClasses.LoadStationsTFL;
 import mycompany.thistest.Connectivity.GPSTracker;
 import mycompany.thistest.PlacesSearch.PlacesList;
+import mycompany.thistest.Spots.BikePoint;
+import mycompany.thistest.Spots.SpotSearch;
 import mycompany.thistest.Utilities.Utils;
 
 /**
@@ -45,13 +46,10 @@ import mycompany.thistest.Utilities.Utils;
 public class CustomizedMap implements Parcelable{
 
     public static final float ZOOM_MIN = 14.5f;
-    private static final int SPOT_PLACE = 0;
-    private static final int SPOT_STATION = 1;
+
     // Nearest places
     private PlacesList nearPlaces;
-    LoadGooglePlaces loadPlaces;
 
-    LoadStationsTFL loadStations;
     // Map view
     GoogleMap map;
 
@@ -60,11 +58,7 @@ public class CustomizedMap implements Parcelable{
     Utils utils;
 
     //circle used to show perimeter where places were looked
-    Circle circle;
-
-    HashMap<Marker, Spot> markerPlaces;
-
-    HashMap<Marker, Spot> markerStations;
+    //Circle circle;
 
     //radius of the perimeter where we look for places
     int radius;
@@ -75,88 +69,80 @@ public class CustomizedMap implements Parcelable{
     //the farest location of marker
     int max_pos;
 
-    String types;
-
-    String transports;
-
     //marker of the camera, needed to remove marker from previous location
     Marker pos;
 
-    //boolean isMoving;
-
     boolean isConnected;
 
-    private List<Spot> transportStations;
+    SpotSearch searchPlace;
 
-    public CustomizedMap(GoogleMap m, MainActivity mapActivity){
-        loadPlaces = new LoadGooglePlaces();
-        loadStations = new LoadStationsTFL();
+    SpotSearch searchStation;
+
+    public CustomizedMap(GoogleMap m, MapActivity mapActivity){
+        searchPlace = new SpotSearch(SpotSearch.SpotType.PLACE);
+        searchStation = new SpotSearch(SpotSearch.SpotType.TRANSPORT);
         activity = mapActivity;
         map = m;
         map.setMyLocationEnabled(true);
         utils = new Utils();
         map.setPadding(0, utils.dpToPx(50, activity.getBaseContext()), 0, 0);
-        markerPlaces = new HashMap<Marker, Spot>();
-        markerStations = new HashMap<Marker, Spot>();
         pos = null;
         GPSTracker gps = new GPSTracker(activity);
         oldPos = new LatLng(gps.getLatitude(), gps.getLongitude());
         isConnected = true;
-        transports = null;
         radius = activity.getResources().getInteger(R.integer.radius);
         max_pos = 0;
 
         nearPlaces = null;
-        transportStations = null;
 
-        CircleOptions circleOptions = new CircleOptions()
+       /*CircleOptions circleOptions = new CircleOptions()
                 .center(oldPos)
                 .radius(max_pos)
                 .fillColor(0x220000FF)
                 .strokeColor(Color.TRANSPARENT);
-        circle = map.addCircle(circleOptions);
+        circle = map.addCircle(circleOptions);*/
 
         setLocationButtonListener();
         setCameraListener();
         setMarkersListener();
         setButtonFind();
+        setListeners();
     }
 
-    public CustomizedMap(Activity a, GoogleMap ma, CustomizedMap m){
-        this.markerStations = m.markerStations;
-        this.markerPlaces = m.markerPlaces;
-        this.loadPlaces = m.loadPlaces;
-        this.loadStations = m.loadStations;
-        this.utils = m.utils;
-        this.circle = m.circle;
+    @Override
+    public void writeToParcel(Parcel dest, int flags) {
+        /*dest.writeSerializable(searchPlace);
+        dest.writeSerializable(searchStation);
+        dest.writeInt(radius);
+        dest.writeDouble(oldPos.latitude);
+        dest.writeDouble(oldPos.longitude);
+        dest.writeInt(max_pos);
+        dest.writeInt( isConnected ? 1 :0 );
+        dest.writeSerializable(nearPlaces);*/
+    }
+
+    public void updateMap(Activity a, GoogleMap ma){
+        this.utils = new Utils();
+        //this.circle = m.circle;
         this.map = ma;
-        this.radius = m.radius;
-        this.oldPos = m.oldPos;
-        this.pos = map.addMarker(new MarkerOptions().position(map.getCameraPosition().target));
-        this.max_pos = m.max_pos;
-        this.types = m.types;
-        this.transports = m.transports;
-        this.isConnected = m.isConnected;
         this.activity = a;
-        map.setMyLocationEnabled(true);
+        this.pos = map.addMarker(new MarkerOptions().position(map.getCameraPosition().target));
         setLocationButtonListener();
         setCameraListener();
         setMarkersListener();
         setButtonFind();
+        setListeners();
 
-        this.nearPlaces = m.nearPlaces;
-        this.transportStations = m.transportStations;
-        if(!this.loadPlaces.isFinished()) {
-            searchPlaces();
+        if(!this.searchPlace.getLoadSpots().isFinished()) {
+            search(searchPlace);
         }else {
-            updateNearPlaces(nearPlaces);
+            setMarkers(searchPlace);
         }
-        if(!this.loadStations.isFinished()) {
-            searchStations();
+        if(!this.searchStation.getLoadSpots().isFinished()) {
+            search(searchStation);
         }else {
-            updateStations(transportStations);
+            setMarkers(searchStation);
         }
-
     }
 
     private void setLocationButtonListener(){
@@ -179,18 +165,14 @@ public class CustomizedMap implements Parcelable{
         });
     }
 
-    public GoogleMap getMap(){
-        return map;
-    }
-
     //add listener to handle markers when touched
     private void setMarkersListener(){
         map.setOnInfoWindowClickListener(new GoogleMap.OnInfoWindowClickListener() {
             @Override
             public void onInfoWindowClick(Marker marker) {
                 Intent in;
-                if(markerPlaces.get(marker)!=null){
-                    String reference = markerPlaces.get(marker).getId();
+                if(searchPlace.getMarkers().get(marker)!=null){
+                    String reference = searchPlace.getMarkers().get(marker).getId();
                     in = new Intent(activity.getApplicationContext(),
                             SinglePlaceActivity.class);
                     // Sending place reference id to single place activity stop pretending !!!
@@ -199,7 +181,7 @@ public class CustomizedMap implements Parcelable{
                     activity.startActivity(in);
                 }else{
                     in = new Intent(activity.getApplicationContext(), TransportActivity.class);
-                    in.putExtra("station", markerStations.get(marker));
+                    in.putExtra("station", searchStation.getMarkers().get(marker));
                     activity.startActivity(in);
                 }
             }
@@ -210,13 +192,10 @@ public class CustomizedMap implements Parcelable{
             public boolean onMarkerClick(Marker marker) {
                 marker.showInfoWindow();
                 map.stopAnimation();
-
                 return true;
             }
         });
     }
-
-
 
     //to initialize and set camera listener (to do in OnCreate)
     private void setCameraListener(){
@@ -230,15 +209,15 @@ public class CustomizedMap implements Parcelable{
                     //if camera is closed enough and has moved enough to update the map
                     // (or if previous search is empty try to get new places)
                     if (cameraPosition.zoom >= ZOOM_MIN) {
-                        if ((utils.distFrom(oldPos, cameraPosition.target) > radius / 2 || markerPlaces.isEmpty()) /*&& isMoving*/) {
+                        if ((utils.distFrom(oldPos, cameraPosition.target) > radius / 2 || searchPlace.getMarkers().isEmpty()) /*&& isMoving*/) {
                             updateMap();
                         }
                     } else {
                         //if zoom is too far, clean the map
                         map.clear();
-                        circle = null;
-                        markerPlaces.clear();
-                        markerStations.clear();
+                        //circle = null;
+                        searchPlace.getMarkers().clear();
+                        searchStation.getMarkers().clear();
                         activity.findViewById(R.id.button).setVisibility(View.INVISIBLE);
                     }
                 } else {
@@ -252,17 +231,15 @@ public class CustomizedMap implements Parcelable{
 
     //update map with places found around new location
     public void updateMap(){
+
         CameraPosition cameraPosition = map.getCameraPosition();
-
         Log.v("zoomCamera", "camera zoom" + cameraPosition.zoom);
-
         oldPos = cameraPosition.target;
 
         //search near places around new location
-        if(types!=null) {
-            searchPlaces();
+        if(searchPlace.getType()!=null) {
+            search(searchPlace);
         }
-
         if (pos != null) {
             pos.remove();
         }
@@ -270,10 +247,8 @@ public class CustomizedMap implements Parcelable{
         //add marker on the new location
         pos = map.addMarker(new MarkerOptions().position(cameraPosition.target));
 
-        //isMoving = false;
-
         //draw a circle surrounding all places found
-        if (circle == null) {
+        /*if (circle == null) {
             CircleOptions circleOptions = new CircleOptions()
                     .center(cameraPosition.target)
                     .radius(max_pos)
@@ -281,42 +256,26 @@ public class CustomizedMap implements Parcelable{
                     .strokeColor(Color.TRANSPARENT);
             circle = map.addCircle(circleOptions);
             activity.findViewById(R.id.button).setVisibility(View.VISIBLE);
-        }
+        }*/
 
         //if transports should be found
-        if(transports !=null)
-            setTransports(transports);
-    }
-
-    //method called by loadplaces when places have been found
-    //save the nearest place in the customized map class
-    public void updateNearPlaces(PlacesList np){
-        nearPlaces = np;
-        if(nearPlaces!=null) {
-            ArrayList<Spot> spots = new ArrayList<Spot>(nearPlaces.results);
-            setMarkers(spots, SPOT_PLACE);
+        if(searchStation.getType() !=null) {
+           // setTransports(searchStation.getType());
+            search(searchStation);
         }
     }
-
-    //method called by loadplaces when places have been found
-    //save the nearest place in the customized map class
-    public void updateStations(List<Spot> sl){
-
-        transportStations = sl;
-        setMarkers(sl, SPOT_STATION);
-    }
-
-    //true if the user is moving map
-   /* public void setIsMoving(boolean b){
-        isMoving = b;
-    }*/
 
     //change types of points of interests
     //should reload places
-    public void setTypes(String t){
-        types = t;
-        //new LoadPlaces(activity, radius, types, map.getCameraPosition().target).execute();
-        searchPlaces();
+    public void updatePlaces(String t){
+        searchPlace.setType(t);
+        search(searchPlace);
+    }
+
+    //to save transports mode chosen by user
+    public void updateStations(String type){
+        searchStation.setType(type);
+        search(searchStation);
     }
 
     public CameraPosition getCameraPosition(){
@@ -361,23 +320,16 @@ public class CustomizedMap implements Parcelable{
         }
     }
 
-    //to save transports mode chosen by user
-    public void setTransports(String type){
-        transports = type;
-        searchStations();
-    }
-
     //to add markers on map following places found
-    public void setMarkers(List<Spot> list, int spotType){
+    public void setMarkers(SpotSearch search){
         max_pos = 0;
-        //clean hash map with previous markets
 
        HashMap<Marker, Spot> newSpots = new HashMap<Marker, Spot>();
 
         //for each place, add a market with properties
-        if(list!= null && !list.isEmpty()) {
+        if(search.getSpots()!= null && !search.getSpots().isEmpty()) {
 
-            for (Iterator<Spot> iterator = list.iterator(); iterator.hasNext(); ) {
+            for (Iterator<Spot> iterator = search.getSpots().iterator(); iterator.hasNext(); ) {
 
                 Spot s = iterator.next();
 
@@ -388,69 +340,45 @@ public class CustomizedMap implements Parcelable{
                     max_pos = Math.max(max_pos, distance);
 
                     //used to draw icon following type of the place
-                    String mDrawableName = s.getType();
-
+                    String mDrawableName = s.getType().toLowerCase();
+                    Log.v("naaame", mDrawableName);
                     //get icon corresponding to the type of the place
                     int resID = activity.getResources().getIdentifier(mDrawableName, "drawable", activity.getPackageName());
                     Marker m;
+                    Bitmap bmp = BitmapFactory.decodeResource(activity.getResources(), resID);
+                    if(resID == 0) {
+                        resID = activity.getResources().getIdentifier("def", "drawable", activity.getPackageName());
+                        bmp = BitmapFactory.decodeResource(activity.getResources(), resID);
+                    }
 
-                    Bitmap bmp0 = BitmapFactory.decodeResource(activity.getResources(), resID);
-                    Bitmap bmp = bmp0.copy(Bitmap.Config.ARGB_8888, true);
-                    Canvas canvas1 = new Canvas(bmp);
+                    if(mDrawableName.equals("bike")) {
+                        bmp = bmp.copy(Bitmap.Config.ARGB_8888, true);
+                        Canvas canvas1 = new Canvas(bmp);
 
-                    // paint defines the text color,
-                    // stroke width, size
-                    Paint color = new Paint();
-                    color.setTextSize(10);
-                    color.setColor(Color.BLACK);
+                        // paint defines the text color,
+                        // stroke width, size
+                        Paint color = new Paint();
+                        color.setTextSize(20);
+                        color.setColor(Color.BLACK);
+                        //modify canvas
+                        canvas1.drawBitmap(BitmapFactory.decodeResource(activity.getResources(),
+                                resID), 0, 0, color);
+                        canvas1.drawText(((BikePoint)s).getNbBikes(), bmp.getWidth() / 3, bmp.getHeight() / 2, color);
 
-                    //modify canvas
-                    canvas1.drawBitmap(BitmapFactory.decodeResource(activity.getResources(),
-                            resID), 0,0, color);
-                    canvas1.drawText("50",bmp.getWidth()/2,bmp.getHeight()/2, color);
+                    }
 
-                    //if the icon has not been found just add a default marker
-                    if (resID == 0) {
-                        m = (map.addMarker(new MarkerOptions()
-                                .position(new LatLng(s.getLatitude(), s.getLongitude()))
-                                .title(s.getName())));
-                    } else {
                         m = (map.addMarker(new MarkerOptions()
                                 .position(new LatLng(s.getLatitude(), s.getLongitude()))
                                 .title(s.getName())
                                 .icon(BitmapDescriptorFactory.fromBitmap(bmp))));
-                    }
                     newSpots.put(m, s);
                 } else {
                     //if the place is too far, remove it from list
-                    list.remove(iterator);
+                    search.getSpots().remove(iterator);
                 }
             }
         }
-
-        switch (spotType){
-            case SPOT_PLACE :{
-                for (Iterator iterator = markerPlaces.entrySet().iterator(); iterator.hasNext(); ) {
-                    HashMap.Entry<Marker, Spot> pairs = (HashMap.Entry<Marker, Spot>)iterator.next();
-                    pairs.getKey().remove();
-                    iterator.remove();
-                }
-                markerPlaces = newSpots;
-                break;
-            }
-            case SPOT_STATION :{
-                for (Iterator iterator = markerStations.entrySet().iterator(); iterator.hasNext(); ) {
-                    HashMap.Entry<Marker, Spot> pairs = (HashMap.Entry<Marker, Spot>)iterator.next();
-                    pairs.getKey().remove();
-                    iterator.remove();
-                }
-                markerStations = newSpots;
-                break;
-            }
-            default: {
-                break;
-            }
-        }
+        search.updateMarkers(newSpots);
     }
 
     @Override
@@ -458,60 +386,59 @@ public class CustomizedMap implements Parcelable{
         return 0;
     }
 
-    @Override
-    public void writeToParcel(Parcel dest, int flags) {
-    }
+    public void setListeners(){
+        LoadData.OnTaskComplete onTaskComplete2 = (new LoadStationsTFL.OnTaskComplete() {
 
-    private void searchPlaces(){
-        ProgressBar pb = (ProgressBar) activity.findViewById(R.id.progressBar);
-        pb.setIndeterminate(true);
-        pb.setVisibility(View.VISIBLE);
+            @Override
+            public void setMyTaskComplete(Object obj) {
+                searchStation.setSpots((List<Spot>) obj);
+                setMarkers(searchStation);
+                if ((searchPlace.getLoadSpots().isFinished())) {
+                    ProgressBar pb = (ProgressBar) activity.findViewById(R.id.progressBar);
+                    pb.setVisibility(View.INVISIBLE);
+                }
+            }
+        });
 
-        if(!loadPlaces.isFinished()){
-            loadPlaces.cancel(true);
-        }
-
-        loadPlaces = new LoadGooglePlaces(radius, types, map.getCameraPosition().target);
-        loadPlaces.setMyTaskCompleteListener(new LoadGooglePlaces.OnTaskComplete() {
+        LoadData.OnTaskComplete onTaskComplete1 = (new LoadGooglePlaces.OnTaskComplete() {
             @Override
             public void setMyTaskComplete(Object obj) {
                 if (obj != null) {
-                    updateNearPlaces((PlacesList)obj);
+                    nearPlaces = (PlacesList) obj;
+                    if(nearPlaces!=null) {
+                        searchPlace.setSpots(new ArrayList<Spot>(nearPlaces.results));
+                        setMarkers(searchPlace);
+                    }
                 }
-                if((loadStations.isFinished())){
+                if ((searchStation.getLoadSpots().isFinished())) {
                     ProgressBar pb = (ProgressBar) activity.findViewById(R.id.progressBar);
                     pb.setVisibility(View.INVISIBLE);
                 }
             }
         });
-        loadPlaces.execute();
 
-
+        searchPlace.setOnTaskComplete(onTaskComplete1);
+        searchStation.setOnTaskComplete((onTaskComplete2));
     }
 
-    public void searchStations(){
-        ProgressBar pb = (ProgressBar) activity.findViewById(R.id.progressBar);
-        pb.setIndeterminate(true);
-        pb.setVisibility(View.VISIBLE);
+        public void search(SpotSearch spotSearch){
+            ProgressBar pb = (ProgressBar) activity.findViewById(R.id.progressBar);
+            pb.setIndeterminate(true);
+            pb.setVisibility(View.VISIBLE);
 
-        if(!loadStations.isFinished()) {
-            loadStations.cancel(true);
+            if(!spotSearch.getLoadSpots().isFinished()) {
+                spotSearch.getLoadSpots().cancel(true);
+            }
+            switch (spotSearch.getSearchType()){
+                case TRANSPORT:
+                    spotSearch.setLoadSpots(new LoadStationsTFL(searchStation.getType(),map.getCameraPosition().target, radius));
+                    break;
+                case PLACE:
+                    searchPlace.setLoadSpots(new LoadGooglePlaces(radius, searchPlace.getType(), map.getCameraPosition().target));
+                    break;
+                default:
+                    break;
+            }
+            spotSearch.getLoadSpots().execute();
         }
-
-
-        loadStations = new LoadStationsTFL(transports,map.getCameraPosition().target, radius);
-
-        loadStations.setMyTaskCompleteListener(new LoadStationsTFL.OnTaskComplete() {
-
-            @Override
-            public void setMyTaskComplete(Object obj) {
-                updateStations((List<Spot>)obj);
-                if((loadPlaces.isFinished())){
-                    ProgressBar pb = (ProgressBar) activity.findViewById(R.id.progressBar);
-                    pb.setVisibility(View.INVISIBLE);
-                }
-            }
-        });
-        loadStations.execute();
-    }
 }

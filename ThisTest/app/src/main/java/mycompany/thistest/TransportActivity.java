@@ -1,53 +1,59 @@
 package mycompany.thistest;
 
 import android.app.Activity;
+import android.app.AlarmManager;
+import android.app.FragmentManager;
 import android.app.FragmentTransaction;
+import android.app.PendingIntent;
+import android.content.BroadcastReceiver;
+import android.content.Context;
 import android.content.Intent;
+import android.graphics.Color;
 import android.os.Bundle;
-import android.os.Parcelable;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
+import android.widget.ListAdapter;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import mycompany.thistest.Fragments.NextArrivalsItem;
 import mycompany.thistest.Fragments.ListFragment;
 import mycompany.thistest.Fragments.NextArrivalsListAdapter;
 import mycompany.thistest.Interfaces.Spot;
 import mycompany.thistest.LoadClasses.LoadArr;
+import mycompany.thistest.LoadClasses.LoadData;
 import mycompany.thistest.LoadClasses.LoadTrDepart;
 import mycompany.thistest.NationalRail.ReadCVS;
-import mycompany.thistest.TFL.BikePoint;
+import mycompany.thistest.Spots.BikePoint;
 import mycompany.thistest.TFL.Arrival;
-import mycompany.thistest.TFL.Station;
+import mycompany.thistest.Spots.Station;
 
 
 public class TransportActivity extends Activity implements ListFragment.OnFragmentInteractionListener {
 
-    private ListFragment nextArrivalsListFragment;
-    private ArrayList<NextArrivalsItem> nextArrivalsItemList;
+    ListFragment nextArrivalsListFragment;
     Spot station;
     ArrayList<String> trainDepartures;
+    LoadData loadNextTransports;
+    String stationCode;
+    Timer myTimer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_transport);
 
-        if(savedInstanceState!=null){
-            /*station = (Spot)savedInstanceState.getSerializable("station");
-            if(station.getType().equals("Train")) {
-                trainDepartures = savedInstanceState.getStringArrayList("trains");
-                setTrainDepartures(trainDepartures);
-            }*/
-
-        }
-        else {
+        if(savedInstanceState==null){
 
             Intent i = getIntent();
             station = (Spot) i.getSerializableExtra("station");
@@ -58,9 +64,9 @@ public class TransportActivity extends Activity implements ListFragment.OnFragme
                 String name = stationName.split(" Rail Station")[0];
 
                 ReadCVS readCVS = new ReadCVS(this);
-                String stationCode = readCVS.searchCodeStation(name);
-                LoadTrDepart loadTrains = new LoadTrDepart(stationCode);
-                loadTrains.setMyTaskCompleteListener(new LoadArr.OnTaskComplete() {
+                stationCode = readCVS.searchCodeStation(name);
+                loadNextTransports = new LoadTrDepart(stationCode);
+                loadNextTransports.setMyTaskCompleteListener(new LoadArr.OnTaskComplete() {
                     @Override
                     public void setMyTaskComplete(Object obj) {
                         if (obj != null) {
@@ -71,11 +77,11 @@ public class TransportActivity extends Activity implements ListFragment.OnFragme
                         }
                     }
                 });
-                loadTrains.execute();
+                loadNextTransports.execute();
             } else if (type.equals("Metro") || type.equals("Bus")) {
                 //load transport next arrivals to the current station
-                LoadArr loadArr = new LoadArr(((Station) station).getRailId());
-                loadArr.setMyTaskCompleteListener(new LoadArr.OnTaskComplete() {
+                loadNextTransports = new LoadArr(((Station) station).getRailId());
+                loadNextTransports.setMyTaskCompleteListener(new LoadArr.OnTaskComplete() {
                     @Override
                     public void setMyTaskComplete(Object obj) {
                         if (obj != null) {
@@ -83,9 +89,9 @@ public class TransportActivity extends Activity implements ListFragment.OnFragme
                         }
                     }
                 });
-                loadArr.execute();
+                loadNextTransports.execute();
 
-            } /*else if (type.equals("Bike")) {
+            } else if (type.equals("Bike")) {
                 String s1 = ((BikePoint) station).getBikes();
                 String s2 = ((BikePoint) station).getEmpty();
                 String[] bikes = new String[]{s1, s2};
@@ -94,21 +100,57 @@ public class TransportActivity extends Activity implements ListFragment.OnFragme
                         this,
                         android.R.layout.simple_list_item_1,
                         bikes);
+
                 ListView myList = (ListView)
                         findViewById(R.id.lv);
                 myList.setAdapter(myAdapter);
-            }*/
+            }
         }
+        nextArrivalsListFragment = null;
+        myTimer = new Timer();
+        MyTimerTask myTimerTask= new MyTimerTask();
+        myTimer.scheduleAtFixedRate(myTimerTask, 6000, 6000); //(timertask,delay,period)
     }
 
+
+private class MyTimerTask extends TimerTask {
+    @Override
+    public void run() {
+        Log.v("alarmTime", "ring");
+        if (station.getType().equals("Train")) {
+            loadNextTransports = new LoadTrDepart(stationCode);
+            loadNextTransports.setMyTaskCompleteListener(new LoadArr.OnTaskComplete() {
+                @Override
+                public void setMyTaskComplete(Object obj) {
+                    if (obj != null) {
+                        trainDepartures = ((ArrayList<String>)obj);
+                        HashMap<String, ArrayList<String>> trains = new HashMap<String, ArrayList<String>>();
+                        trains.put("", trainDepartures);
+                        addFragment(trains);
+                    }
+                }
+            });
+            loadNextTransports.execute();
+        } else if (station.getType().equals("Metro") || station.getType().equals("Bus")) {
+            //load transport next arrivals to the current station
+            loadNextTransports = new LoadArr(((Station) station).getRailId());
+            loadNextTransports.setMyTaskCompleteListener(new LoadArr.OnTaskComplete() {
+                @Override
+                public void setMyTaskComplete(Object obj) {
+                    if (obj != null) {
+                        shapeArrivals((List<Arrival>) obj);
+                    }
+                }
+            });
+        }
+            loadNextTransports.execute();
+    }
+}
+
+    //to sort arrivals by metro line
     public void shapeArrivals(List<Arrival> arrivals){
-
-        //can be improved by looking for arrivals by line for a stopPoint
-        //sort arrivals by line
-
         HashMap<String, ArrayList<String>> arrivalsByLine = new HashMap<String, ArrayList<String>>();
         for(Arrival a: arrivals){
-            Log.v("arrivalsdetails", "name "+  a.getLineName() + " destination " + a.getDestinationName() + " plateforme "+a.getPlatform());
             if(arrivalsByLine.containsKey(a.getLineName())){
                 arrivalsByLine.get(a.getLineName()).add(a.toString());
             }else{
@@ -120,19 +162,37 @@ public class TransportActivity extends Activity implements ListFragment.OnFragme
         addFragment(arrivalsByLine);
     }
 
+    //to a listFragment with all lines arrivals displayed
     public void addFragment(HashMap<String, ArrayList<String>> arrivals){
-
-        FragmentTransaction transaction = getFragmentManager().beginTransaction();
-        nextArrivalsItemList = new ArrayList<NextArrivalsItem>();
-
+        final ArrayList<NextArrivalsItem> nextArrivalsItemList = new ArrayList<NextArrivalsItem>();
         for(HashMap.Entry<String, ArrayList<String>> entry : arrivals.entrySet() ) {
-            nextArrivalsItemList.add(new NextArrivalsItem(entry.getKey(), entry.getValue()));
+            for(String s:entry.getValue()) {
+                Log.v("arrivalsdetails1", entry.getKey()+" "+s);
+            }
+            int resID = getResources().getIdentifier(entry.getKey().split(" ")[0], "string", getPackageName());
+            int c;
+            if(resID != 0){
+                c = Color.parseColor(getResources().getString(resID));
+            }else{
+                c = Color.parseColor("#FFFFFF");
+            }
+            nextArrivalsItemList.add(new NextArrivalsItem(entry.getKey(), entry.getValue(), c));
         }
 
-        ListFragment nextArrivalsListFragment = new ListFragment();
-        nextArrivalsListFragment.setmAdapter(new NextArrivalsListAdapter(this, nextArrivalsItemList));
-        transaction.add(R.id.container, nextArrivalsListFragment, "line_fragment");
-        transaction.commit();
+        if(nextArrivalsListFragment == null) {
+            FragmentTransaction transaction = getFragmentManager().beginTransaction();
+            nextArrivalsListFragment = new ListFragment();
+            nextArrivalsListFragment.setmAdapter(new NextArrivalsListAdapter(this, nextArrivalsItemList));
+            transaction.add(R.id.container, nextArrivalsListFragment, "line_fragment");
+            transaction.commit();
+        }else{
+            runOnUiThread(new Runnable() {
+            @Override
+            public void run() {
+                nextArrivalsListFragment.update(nextArrivalsItemList);
+                }
+            });
+        }
     }
 
     @Override
@@ -153,28 +213,29 @@ public class TransportActivity extends Activity implements ListFragment.OnFragme
         if (id == R.id.action_settings) {
             return true;
         }
-
         return super.onOptionsItemSelected(item);
     }
 
     @Override
     public void onFragmentInteraction(String id) {
-
     }
 
     @Override
     protected void onSaveInstanceState(Bundle outState) {
         super.onSaveInstanceState(outState);
-        //outState.putSerializable("station", station);
         if(getFragmentManager().findFragmentByTag("line_fragment")!=null) {
             getFragmentManager().findFragmentByTag("line_fragment").setRetainInstance(true);
         }
-        /*if(station.getType().equals("Train")){
+    }
 
-           outState.putStringArrayList("trains", trainDepartures);
+    @Override
+    protected void onResume() {
+        super.onResume();
+    }
 
-        }*/
-
-
+    @Override
+    protected void onDestroy() {
+        myTimer.cancel();
+        super.onDestroy();
     }
 }

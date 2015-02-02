@@ -22,7 +22,7 @@ import android.widget.SimpleAdapter;
 import android.widget.TextView;
 
 import mycompany.thistest.Dialogs.AlertDialogManager;
-import mycompany.thistest.PlacesSearch.Place;
+import mycompany.thistest.Spots.Place;
 import mycompany.thistest.PlacesSearch.PlacesList;
 import mycompany.thistest.Utilities.SeparatedAdapter;
 

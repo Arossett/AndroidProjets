@@ -1,6 +1,6 @@
 <menu xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools"
-    tools:context="mycompany.thistest.MainActivity">
+    tools:context="mycompany.thistest.MapActivity">
     <item android:id="@+id/place_settings" android:title="Change Places Types"
         android:orderInCategory="100" android:showAsAction="never" />
     <item android:id="@+id/transport_settings" android:title="Change Transport Types"

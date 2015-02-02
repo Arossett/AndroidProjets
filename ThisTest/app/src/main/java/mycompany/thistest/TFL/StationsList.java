@@ -1,12 +1,12 @@
 package mycompany.thistest.TFL;
 
-import android.util.Log;
-
 import com.google.api.client.util.Key;
 
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
+import mycompany.thistest.Spots.Station;
 
 /**
  * Created by trsq9010 on 12/12/2014.

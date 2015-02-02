@@ -18,16 +18,8 @@ public class TypesChoice extends DialogFragment{
     AlertDialog alertDialog;
     //to identify what kind of choices is made (transport or places for example)
     int type_id;
-    boolean onScreen;
     AlertDialog.Builder builder;
     boolean isClosable;
-/*
-    @Override
-    public Dialog onCreateDialog(Bundle savedInstanceState) {
-
-        return alertDialog;
-    }*/
-
 
     public void enablePositiveButton(){
         alertDialog.getButton(DialogInterface.BUTTON_POSITIVE).setEnabled(true);
@@ -103,17 +95,12 @@ public class TypesChoice extends DialogFragment{
             }
         });
 
-
         alertDialog.show();
 
         //for not having empty search
         if(isMultipleChoice)
             disablePositiveButton();
 
-        onScreen = true;
-       // setRetainInstance(true);
-
-        //super.onCreate(savedInstanceState);
         return alertDialog;
     }
 
@@ -152,12 +139,7 @@ public class TypesChoice extends DialogFragment{
 
     @Override
     public void onDismiss(DialogInterface dialog) {
-        onScreen = false;
         super.onDismiss(dialog);
-    }
-
-    public boolean getOnScreen(){
-        return onScreen;
     }
 
     @Override

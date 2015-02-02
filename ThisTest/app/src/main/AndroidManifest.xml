@@ -32,7 +32,7 @@
             android:label="@string/title_activity_single_place" >
         </activity>
         <activity
-            android:name=".MainActivity"
+            android:name=".MapActivity"
             android:label="@string/title_activity_places_map"
             >
             <intent-filter>

@@ -62,21 +62,6 @@ public class RailHandler {
 
         try {
             ht.call(SOAP_ACTION, envelope);
-
-            /*
-            List COOKIE_HEADER = (List)      ht.getServiceConnection().getResponseProperties();
-
-            for (int i = 0; i < COOKIE_HEADER.size(); i++) {
-                String key = COOKIE_HEADER.get(i).getKey();
-                String value = COOKIE_HEADER.get(i).getValue();
-
-                if (key != null && key.equalsIgnoreCase("set-cookie")) {
-                    SoapRequests.SESSION_ID = value.trim();
-                    Log.v("SOAP RETURN", "Cookie :" + SoapRequests.SESSION_ID);
-                    break;
-                }
-            }
-            */
             data = ht.responseDump.toString();
 
         } catch (SocketTimeoutException t) {

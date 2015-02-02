@@ -3,14 +3,18 @@ package mycompany.thistest.Fragments;
 import android.app.Activity;
 import android.os.Bundle;
 import android.app.Fragment;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.AbsListView;
 import android.widget.AdapterView;
+import android.widget.BaseAdapter;
 import android.widget.ListAdapter;
 import android.widget.TextView;
 
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import mycompany.thistest.R;
@@ -59,12 +63,11 @@ public class ListFragment extends Fragment implements AbsListView.OnItemClickLis
         return fragment;
     }
 
-    /**
-     * Mandatory empty constructor for the fragment manager to instantiate the
-     * fragment (e.g. upon screen orientation changes).
-     */
-    public ListFragment() {
+
+    public ListFragment(){
+
     }
+
     private List<NextArrivalsItem> nextArrivalsItemList;
 
     @Override
@@ -125,18 +128,6 @@ public class ListFragment extends Fragment implements AbsListView.OnItemClickLis
         }
     }
 
-    /**
-     * The default content for this Fragment has a TextView that is shown when
-     * the list is empty. If you would like to change the text, call this method
-     * to supply the text it should use.
-     */
-    public void setEmptyText(CharSequence emptyText) {
-        View emptyView = mListView.getEmptyView();
-
-        if (emptyView instanceof TextView) {
-            ((TextView) emptyView).setText(emptyText);
-        }
-    }
 
     /**
      * This interface must be implemented by activities that contain this
@@ -151,6 +142,35 @@ public class ListFragment extends Fragment implements AbsListView.OnItemClickLis
     public interface OnFragmentInteractionListener {
         // TODO: Update argument type and name
         public void onFragmentInteraction(String id);
+    }
+
+    public void update(List<NextArrivalsItem> adapter){
+        //clean old information
+        for(int i = 0;i<mListView.getCount(); i++) {
+            ((NextArrivalsItem)mListView.getItemAtPosition(i)).setArrivals(new ArrayList<String>());
+        }
+        //set new arrivals information
+        for(NextArrivalsItem arrival: adapter){
+            boolean exist = false;
+            for(int i = 0;i<mListView.getCount(); i++){
+                if(arrival.getItemTitle().equals(((NextArrivalsItem)mListView.getItemAtPosition(i)).getItemTitle())){
+                    ((NextArrivalsItem)mListView.getItemAtPosition(i)).setArrivals(arrival.getArrivals());
+                    exist = true;
+                    break;
+                }
+            }
+            if(!exist){
+                mAdapter = new NextArrivalsListAdapter(getActivity(), adapter);
+                mListView.setAdapter(mAdapter);
+                break;
+            }
+        }
+
+        //display it on screen
+        synchronized (mListView.getAdapter()){
+            BaseAdapter ba = (BaseAdapter) mListView.getAdapter();
+            ba.notifyDataSetChanged();
+        }
     }
 
 }

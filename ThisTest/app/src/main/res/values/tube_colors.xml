@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="Bakerloo">#AE6118</string>
+    <string name="Circle">#F8D42D</string>
+    <string name="Central">#E41F1F</string>
+    <string name="District">#00A575</string>
+    <string name="DLR">#00BBB4</string>
+    <string name="Hammersmith">#E899A8</string>
+    <string name="Jubilee">#8F989E</string>
+    <string name="Overground">#F86C00</string>
+    <string name="Metropolitan">#893267</string>
+    <string name="Northern">#000000</string>
+    <string name="Picadilly">#0450A1</string>
+    <string name="Victoria">#009FE0</string>
+    <string name="Waterloo">#000</string>
+</resources>

@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 import com.google.api.client.util.Key;
 
-import mycompany.thistest.PlacesSearch.Place;
+import mycompany.thistest.Spots.Place;
 
 /** Implement this class from "Serializable"
  * So that you can pass this class Object to another using Intents

@@ -1,4 +1,4 @@
-package mycompany.thistest.TFL;
+package mycompany.thistest.Spots;
 
 import com.google.api.client.util.Key;
 

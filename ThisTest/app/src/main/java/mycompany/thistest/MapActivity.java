@@ -11,7 +11,6 @@ import android.os.Message;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.MotionEvent;
 import android.view.View;
 import android.widget.Button;
 import android.widget.RelativeLayout;
@@ -28,7 +27,7 @@ import mycompany.thistest.Connectivity.ConnectivityChangeReceiver;
 import mycompany.thistest.Dialogs.TypesChoice;
 
 
-public class MainActivity extends Activity implements TypesChoice.NoticeDialogListener {
+public class MapActivity extends Activity implements TypesChoice.NoticeDialogListener {
 
     public static final float ZOOM_MIN = 14.5f;
 
@@ -68,22 +67,16 @@ public class MainActivity extends Activity implements TypesChoice.NoticeDialogLi
 
         if(isService) {
             setContentView(R.layout.activity_places_map);
-
-
-
             //used to restore view when app rotated
             if (savedInstanceState != null) {
                 placesTypes = savedInstanceState.getString("places_types");
-                //transportType = savedInstanceState
-
-                //map.setTypes(placesTypes);
-                /*map.setOldPos(new LatLng
-                        (savedInstanceState.getDouble("latitude"), savedInstanceState.getDouble("longitude")));*/
 
                 CustomizedMap customMap =  savedInstanceState.getParcelable("map");
                 GoogleMap googleMap = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
                 if(customMap !=null) {
-                    map = new CustomizedMap(this, googleMap, customMap );
+                   // map = new CustomizedMap(this, googleMap, customMap );
+                    customMap.updateMap(this, googleMap);
+                    map = customMap;
                 }
                 else {
                     map = new CustomizedMap(googleMap, this);
@@ -97,7 +90,6 @@ public class MainActivity extends Activity implements TypesChoice.NoticeDialogLi
                 isDialog = false;
                 //create a customized map from map fragment
                 GoogleMap m = ((MapFragment) getFragmentManager().findFragmentById(R.id.map)).getMap();
-                m.addMarker(new MarkerOptions().title("nana").position(m.getCameraPosition().target));
                 map = new CustomizedMap(m, this);
             }
 
@@ -112,8 +104,6 @@ public class MainActivity extends Activity implements TypesChoice.NoticeDialogLi
                     connectivityChangeReceiver,
                     new IntentFilter(
                             ConnectivityManager.CONNECTIVITY_ACTION));
-
-
 
             //to add listener on button "See list"
             setButtonsListener();
@@ -237,12 +227,12 @@ public class MainActivity extends Activity implements TypesChoice.NoticeDialogLi
                 for (String s : list) {
                     placesTypes = placesTypes + "|" + s;
                 }
-                map.setTypes(placesTypes);
+                map.updatePlaces(placesTypes);
                 break;
             }
             case R.id.transport_settings: {
                 transportType = list.get(0);
-                map.setTransports(transportType);
+                map.updateStations(transportType);
                 break;
             }
             default:{
@@ -263,6 +253,5 @@ public class MainActivity extends Activity implements TypesChoice.NoticeDialogLi
             unregisterReceiver(connectivityChangeReceiver);
         super.onDestroy();
     }
-
 
 }

@@ -4,6 +4,8 @@ import com.google.api.client.util.Key;
 
 import java.util.List;
 
+import mycompany.thistest.Spots.BikePoint;
+
 /**
  * Created by trsq9010 on 13/01/2015.
  */

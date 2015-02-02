@@ -2,12 +2,17 @@ package mycompany.thistest.Fragments;
 
 import android.app.Activity;
 import android.content.Context;
+import android.graphics.Color;
+import android.util.Log;
+import android.view.Gravity;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ArrayAdapter;
 import android.widget.LinearLayout;
+import android.widget.ListAdapter;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import java.util.List;
 
@@ -40,6 +45,7 @@ public class NextArrivalsListAdapter extends ArrayAdapter {
          * @return
          */
         public View getView(int position, View convertView, ViewGroup parent) {
+
             ViewHolder holder = null;
             NextArrivalsItem item = (NextArrivalsItem)getItem(position);
             View viewToUse = null;
@@ -49,35 +55,47 @@ public class NextArrivalsListAdapter extends ArrayAdapter {
             LayoutInflater mInflater = (LayoutInflater) context
                     .getSystemService(Activity.LAYOUT_INFLATER_SERVICE);
             if (convertView == null) {
-
                 viewToUse = mInflater.inflate(R.layout.next_arrivals_layout, null);
                 holder = new ViewHolder();
-                holder.titleText = (TextView)viewToUse.findViewById(R.id.titleTextView);
-                holder.linearLayout = (LinearLayout)viewToUse.findViewById(R.id.linLayout);
-
-               //to display arrivals on screen
-               /*for(String a: item.getArrivals()) {
-                    TextView tv = new TextView(getContext());
-                    tv.setText(a);
-                    holder.linearLayout.addView(tv);
-                }*/
-
-                ArrayAdapter<String> myAdapter = new
-                        ArrayAdapter<String>(
-                        getContext(),
-                        android.R.layout.simple_list_item_1,
-                        item.getArrivals());
-                ListView myList = (ListView)
-                        viewToUse.findViewById(R.id.arrivalsList);
-                myList.setAdapter(myAdapter);
                 viewToUse.setTag(holder);
             } else {
                 viewToUse = convertView;
                 holder = (ViewHolder) viewToUse.getTag();
             }
+            holder.titleText = (TextView)viewToUse.findViewById(R.id.titleTextView);
+            holder.linearLayout = (LinearLayout)viewToUse.findViewById(R.id.linLayout);
+            //if(item.getUpdate())
+            {
+                holder.titleText.setText(item.getItemTitle());
 
-            holder.titleText.setText(item.getItemTitle());
+                holder.linearLayout.removeAllViews();
+                for (int i = 0; i < item.getArrivals().size(); i++) {
+                    TextView tv = new TextView(getContext());
+                    tv.setText(item.getArrivals().get(i) + "\n");
+                    tv.setBackgroundColor(Color.WHITE);
+                    LinearLayout.LayoutParams params = new LinearLayout.LayoutParams
+                            ((int) ViewGroup.LayoutParams.MATCH_PARENT, (int) ViewGroup.LayoutParams.MATCH_PARENT);
+                    params.gravity = Gravity.CENTER_HORIZONTAL;
+                    tv.setLayoutParams(params);
+                    tv.setGravity(Gravity.CENTER);
 
-            return viewToUse;
+                    tv.requestLayout();
+                    holder.linearLayout.addView(tv);
+                }
+                item.hasUpdated();
+            }
+            viewToUse.setBackgroundColor(item.getColor());
+
+            return  viewToUse;
         }
+
+    public void update(List<NextArrivalsItem> new_items){
+        NextArrivalsItem item = (NextArrivalsItem)getItem(1);
+    }
+
+
+
+
+
+
     }
