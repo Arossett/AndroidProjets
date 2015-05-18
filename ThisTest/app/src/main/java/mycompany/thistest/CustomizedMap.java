@@ -28,6 +28,8 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Timer;
+import java.util.TimerTask;
 
 import mycompany.thistest.Connectivity.GeocodeTask;
 import mycompany.thistest.Interfaces.Spot;
@@ -35,7 +37,7 @@ import mycompany.thistest.LoadClasses.LoadData;
 import mycompany.thistest.LoadClasses.LoadGooglePlaces;
 import mycompany.thistest.LoadClasses.LoadStationsTFL;
 import mycompany.thistest.Connectivity.GPSTracker;
-import mycompany.thistest.PlacesSearch.PlacesList;
+import mycompany.thistest.GooglePlaces.PlacesList;
 import mycompany.thistest.Spots.BikePoint;
 import mycompany.thistest.Spots.SpotSearch;
 import mycompany.thistest.Utilities.Utils;
@@ -76,7 +78,9 @@ public class CustomizedMap implements Parcelable{
 
     SpotSearch searchPlace;
 
-    SpotSearch searchStation;
+    final SpotSearch searchStation;
+
+    Timer myTimer;
 
     public CustomizedMap(GoogleMap m, MapActivity mapActivity){
         searchPlace = new SpotSearch(SpotSearch.SpotType.PLACE);
@@ -92,7 +96,7 @@ public class CustomizedMap implements Parcelable{
         isConnected = true;
         radius = activity.getResources().getInteger(R.integer.radius);
         max_pos = 0;
-
+        myTimer = null;
         nearPlaces = null;
 
        /*CircleOptions circleOptions = new CircleOptions()
@@ -132,6 +136,10 @@ public class CustomizedMap implements Parcelable{
         setMarkersListener();
         setButtonFind();
         setListeners();
+        if(myTimer!=null){
+            MyTimerTask myTimerTask= new MyTimerTask();
+            myTimer.scheduleAtFixedRate(myTimerTask, 10000, 10000);
+        }
 
         if(!this.searchPlace.getLoadSpots().isFinished()) {
             search(searchPlace);
@@ -206,8 +214,9 @@ public class CustomizedMap implements Parcelable{
             public void onCameraChange(CameraPosition cameraPosition) {
                 //check if internet is enabled
                 if (isConnected) {
+
                     //if camera is closed enough and has moved enough to update the map
-                    // (or if previous search is empty try to get new places)
+                    //or if previous search is empty try to get new places
                     if (cameraPosition.zoom >= ZOOM_MIN) {
                         if ((utils.distFrom(oldPos, cameraPosition.target) > radius / 2 || searchPlace.getMarkers().isEmpty()) /*&& isMoving*/) {
                             updateMap();
@@ -219,7 +228,11 @@ public class CustomizedMap implements Parcelable{
                         searchPlace.getMarkers().clear();
                         searchStation.getMarkers().clear();
                         activity.findViewById(R.id.button).setVisibility(View.INVISIBLE);
+                        if(myTimer!=null) {
+                            myTimer.cancel();
+                        }
                     }
+
                 } else {
                     //if no connection, advert user
                     Toast.makeText(activity.getBaseContext(), R.string.connection_lost, Toast.LENGTH_SHORT).show();
@@ -272,9 +285,18 @@ public class CustomizedMap implements Parcelable{
         search(searchPlace);
     }
 
+
     //to save transports mode chosen by user
     public void updateStations(String type){
         searchStation.setType(type);
+        if(type.equals("Bike")){
+            myTimer = new Timer();
+            MyTimerTask myTimerTask= new MyTimerTask();
+            myTimer.scheduleAtFixedRate(myTimerTask, 10000, 10000);
+        }else if(myTimer!=null){
+            myTimer.cancel();
+            myTimer = null;
+        }
         search(searchStation);
     }
 
@@ -364,7 +386,6 @@ public class CustomizedMap implements Parcelable{
                         canvas1.drawBitmap(BitmapFactory.decodeResource(activity.getResources(),
                                 resID), 0, 0, color);
                         canvas1.drawText(((BikePoint)s).getNbBikes(), bmp.getWidth() / 3, bmp.getHeight() / 2, color);
-
                     }
 
                         m = (map.addMarker(new MarkerOptions()
@@ -441,4 +462,26 @@ public class CustomizedMap implements Parcelable{
             }
             spotSearch.getLoadSpots().execute();
         }
+
+
+    private class MyTimerTask extends TimerTask {
+        @Override
+        public void run() {
+            Log.v("alarmTime", "ring");
+            activity.runOnUiThread(new Runnable() {
+                   @Override
+                   public void run() {
+                       search(searchStation);
+                   }
+               }
+            );
+        }
+    }
+
+    public void onPause(){
+        if(myTimer!=null) {
+            myTimer.cancel();
+        }
+    }
+
 }

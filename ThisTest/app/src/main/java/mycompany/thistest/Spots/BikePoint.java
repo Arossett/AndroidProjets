@@ -1,5 +1,7 @@
 package mycompany.thistest.Spots;
 
+import android.util.Log;
+
 import com.google.api.client.util.Key;
 
 import java.io.Serializable;
@@ -60,12 +62,19 @@ public class BikePoint implements Spot{
         @Key
         String value;
 
+        @Key
+        String modified;
+
         public String getKey(){
             return key;
         }
 
         public String getValue(){
             return value;
+        }
+
+        public String   getModified(){
+            return modified;
         }
     }
 

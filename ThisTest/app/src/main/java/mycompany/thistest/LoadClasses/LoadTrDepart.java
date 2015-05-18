@@ -3,7 +3,7 @@ package mycompany.thistest.LoadClasses;
 import java.util.ArrayList;
 import java.util.List;
 
-import mycompany.thistest.NationalRail.RailHandler;
+import mycompany.thistest.APIRequests.RailHandler;
 import mycompany.thistest.NationalRail.TrainDeparture;
 import mycompany.thistest.NationalRail.XMLParser;
 

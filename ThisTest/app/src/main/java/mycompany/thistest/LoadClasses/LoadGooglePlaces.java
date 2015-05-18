@@ -2,8 +2,8 @@ package mycompany.thistest.LoadClasses;
 
 import com.google.android.gms.maps.model.LatLng;
 
-import mycompany.thistest.PlacesSearch.GooglePlaces;
-import mycompany.thistest.PlacesSearch.PlacesList;
+import mycompany.thistest.APIRequests.GooglePlaces;
+import mycompany.thistest.GooglePlaces.PlacesList;
 
 /**
  * Created by trsq9010 on 16/01/2015.

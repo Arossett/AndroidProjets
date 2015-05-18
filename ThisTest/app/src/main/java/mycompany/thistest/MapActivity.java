@@ -251,7 +251,15 @@ public class MapActivity extends Activity implements TypesChoice.NoticeDialogLis
     protected void onDestroy() {
         if(isService)
             unregisterReceiver(connectivityChangeReceiver);
+        //map.onDestroy();
         super.onDestroy();
+    }
+
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        map.onPause();
     }
 
 }

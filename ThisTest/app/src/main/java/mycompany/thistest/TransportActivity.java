@@ -1,26 +1,17 @@
 package mycompany.thistest;
 
 import android.app.Activity;
-import android.app.AlarmManager;
-import android.app.FragmentManager;
 import android.app.FragmentTransaction;
-import android.app.PendingIntent;
-import android.content.BroadcastReceiver;
-import android.content.Context;
 import android.content.Intent;
+import android.content.res.Resources;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
-import android.view.View;
-import android.view.ViewGroup;
-import android.widget.ArrayAdapter;
-import android.widget.ListAdapter;
-import android.widget.ListView;
-import android.widget.RelativeLayout;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Timer;
@@ -33,6 +24,7 @@ import mycompany.thistest.Interfaces.Spot;
 import mycompany.thistest.LoadClasses.LoadArr;
 import mycompany.thistest.LoadClasses.LoadData;
 import mycompany.thistest.LoadClasses.LoadTrDepart;
+import mycompany.thistest.LoadClasses.UpdateBikePoint;
 import mycompany.thistest.NationalRail.ReadCVS;
 import mycompany.thistest.Spots.BikePoint;
 import mycompany.thistest.TFL.Arrival;
@@ -94,8 +86,11 @@ public class TransportActivity extends Activity implements ListFragment.OnFragme
             } else if (type.equals("Bike")) {
                 String s1 = ((BikePoint) station).getBikes();
                 String s2 = ((BikePoint) station).getEmpty();
-                String[] bikes = new String[]{s1, s2};
-                ArrayAdapter<String> myAdapter = new
+                trainDepartures = new ArrayList<String>(Arrays.asList(new String[]{s1, s2}));
+                HashMap<String, ArrayList<String>> trains = new HashMap<String, ArrayList<String>>();
+                trains.put("", trainDepartures);
+                addFragment(trains);
+                /*ArrayAdapter<String> myAdapter = new
                         ArrayAdapter<String>(
                         this,
                         android.R.layout.simple_list_item_1,
@@ -103,13 +98,13 @@ public class TransportActivity extends Activity implements ListFragment.OnFragme
 
                 ListView myList = (ListView)
                         findViewById(R.id.lv);
-                myList.setAdapter(myAdapter);
+                myList.setAdapter(myAdapter);*/
             }
         }
         nextArrivalsListFragment = null;
         myTimer = new Timer();
         MyTimerTask myTimerTask= new MyTimerTask();
-        myTimer.scheduleAtFixedRate(myTimerTask, 6000, 6000); //(timertask,delay,period)
+        myTimer.scheduleAtFixedRate(myTimerTask, 10000, 10000); //(timertask,delay,period)
     }
 
 
@@ -123,14 +118,14 @@ private class MyTimerTask extends TimerTask {
                 @Override
                 public void setMyTaskComplete(Object obj) {
                     if (obj != null) {
-                        trainDepartures = ((ArrayList<String>)obj);
+                        trainDepartures = ((ArrayList<String>) obj);
                         HashMap<String, ArrayList<String>> trains = new HashMap<String, ArrayList<String>>();
                         trains.put("", trainDepartures);
                         addFragment(trains);
                     }
                 }
             });
-            loadNextTransports.execute();
+
         } else if (station.getType().equals("Metro") || station.getType().equals("Bus")) {
             //load transport next arrivals to the current station
             loadNextTransports = new LoadArr(((Station) station).getRailId());
@@ -142,8 +137,27 @@ private class MyTimerTask extends TimerTask {
                     }
                 }
             });
+        } else if(station.getType().equals("Bike")){
+
+            loadNextTransports = new UpdateBikePoint(station.getId());
+            loadNextTransports.setMyTaskCompleteListener(new UpdateBikePoint.OnTaskComplete() {
+                @Override
+                public void setMyTaskComplete(Object obj) {
+                    if (obj != null) {
+
+                        station = (Spot) obj;
+                        String s1 = ((BikePoint) station).getBikes();
+                        String s2 = ((BikePoint) station).getEmpty();
+                        trainDepartures = new ArrayList<String>(Arrays.asList(new String[]{s1, s2}));
+                        HashMap<String, ArrayList<String>> trains = new HashMap<String, ArrayList<String>>();
+                        trains.put("", trainDepartures);
+                        addFragment(trains);
+                    }
+                }
+            });
         }
-            loadNextTransports.execute();
+        loadNextTransports.execute();
+
     }
 }
 
@@ -171,11 +185,12 @@ private class MyTimerTask extends TimerTask {
             }
             int resID = getResources().getIdentifier(entry.getKey().split(" ")[0], "string", getPackageName());
             int c;
-            if(resID != 0){
+            try{
                 c = Color.parseColor(getResources().getString(resID));
-            }else{
+            }catch (Resources.NotFoundException e){
                 c = Color.parseColor("#FFFFFF");
             }
+
             nextArrivalsItemList.add(new NextArrivalsItem(entry.getKey(), entry.getValue(), c));
         }
 
@@ -190,6 +205,7 @@ private class MyTimerTask extends TimerTask {
             @Override
             public void run() {
                 nextArrivalsListFragment.update(nextArrivalsItemList);
+
                 }
             });
         }
@@ -226,11 +242,6 @@ private class MyTimerTask extends TimerTask {
         if(getFragmentManager().findFragmentByTag("line_fragment")!=null) {
             getFragmentManager().findFragmentByTag("line_fragment").setRetainInstance(true);
         }
-    }
-
-    @Override
-    protected void onResume() {
-        super.onResume();
     }
 
     @Override

@@ -2,13 +2,6 @@ package mycompany.thistest.LoadClasses;
 
 import android.os.AsyncTask;
 
-import com.google.android.gms.maps.model.LatLng;
-
-import java.util.Objects;
-
-import mycompany.thistest.PlacesSearch.GooglePlaces;
-import mycompany.thistest.PlacesSearch.PlacesList;
-
 /**
  * Created by trsq9010 on 16/01/2015.
  */

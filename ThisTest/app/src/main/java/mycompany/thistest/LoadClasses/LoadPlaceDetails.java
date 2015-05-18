@@ -1,8 +1,7 @@
 package mycompany.thistest.LoadClasses;
 
-import mycompany.thistest.PlacesSearch.GooglePlaces;
-import mycompany.thistest.PlacesSearch.PlaceDetails;
-import mycompany.thistest.SinglePlaceActivity;
+import mycompany.thistest.APIRequests.GooglePlaces;
+import mycompany.thistest.GooglePlaces.PlaceDetails;
 
 /**
  * Created by trsq9010 on 16/01/2015.

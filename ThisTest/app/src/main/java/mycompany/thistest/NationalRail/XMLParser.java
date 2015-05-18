@@ -15,6 +15,8 @@ import javax.xml.parsers.DocumentBuilder;
 import javax.xml.parsers.DocumentBuilderFactory;
 import javax.xml.parsers.ParserConfigurationException;
 
+import mycompany.thistest.APIRequests.RailHandler;
+
 /**
  * Created by trsq9010 on 09/01/2015.
  */

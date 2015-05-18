@@ -14,8 +14,8 @@ import mycompany.thistest.LoadClasses.LoadGooglePlaces;
 import mycompany.thistest.LoadClasses.LoadPlaceDetails;
 import mycompany.thistest.Connectivity.GoogleServicesConnectionDetector;
 import mycompany.thistest.Dialogs.AlertDialogManager;
-import mycompany.thistest.PlacesSearch.GooglePlaces;
-import mycompany.thistest.PlacesSearch.PlaceDetails;
+import mycompany.thistest.APIRequests.GooglePlaces;
+import mycompany.thistest.GooglePlaces.PlaceDetails;
 
 public class SinglePlaceActivity extends Activity {
     // flag for Internet connection status

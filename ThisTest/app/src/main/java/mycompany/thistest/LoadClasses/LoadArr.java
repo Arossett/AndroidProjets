@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import mycompany.thistest.TFL.Arrival;
-import mycompany.thistest.TFL.TFLSearch;
+import mycompany.thistest.APIRequests.TFLSearch;
 
 /**
  * Created by trsq9010 on 16/01/2015.

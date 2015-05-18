@@ -5,7 +5,7 @@ import com.google.android.gms.maps.model.LatLng;
 import java.util.List;
 
 import mycompany.thistest.Interfaces.Spot;
-import mycompany.thistest.TFL.TFLSearch;
+import mycompany.thistest.APIRequests.TFLSearch;
 
 /**
  * Created by trsq9010 on 16/01/2015.
